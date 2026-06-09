@@ -1,0 +1,80 @@
+# ─── Editors / IDEs ───────────────────────────────────────────────
+# VS Code (keep nothing by default; see note below if you ever want to share config)
+.vscode/
+
+# JetBrains (IntelliJ, PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+Session.vim
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Zed
+.zed/
+
+# ─── AI assistant / tooling artifacts ─────────────────────────────
+# Local AI assistant context, notes, and config that shouldn't ship with the spec.
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.cursor/
+.cursorrules
+.aider*
+.continue/
+.github/copilot-instructions.md
+.windsurfrules
+GEMINI.md
+.gemini/
+
+# ─── OS cruft ─────────────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ─── Scratch / local working files ────────────────────────────────
+# Personal drafts, notes, and exports you don't want in the canonical spec.
+/scratch/
+/drafts/
+/private/
+*.draft.md
+*.local.md
+TODO.local
+notes.local.md
+
+# ─── Document build / preview leftovers (if you ever render the spec) ─
+# e.g. PDF/HTML exports from a markdown renderer or a static-site preview.
+*.pdf
+*.html
+_site/
+.cache/
+node_modules/
+.pandoc/
