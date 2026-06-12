@@ -407,7 +407,7 @@ Three tiers, by domain:
 
 ## 14. Cryptographic profile
 
-The primitives are borrowed; global consensus is refused. A blockchain in the dispatch path is a category error: global total-order consensus is the expensive way to get a weaker guarantee than resource-side fencing already provides locally and instantly.
+The primitives are borrowed; global consensus is refused. Finality is an authority property, not a delivery property. Even perfect transport permits a double-spend. What rejects the second attempt is an authority that orders the two, not a link that delivers them. A blockchain in the dispatch path is a category error: global total-order consensus is the expensive way to get a weaker guarantee than resource-side fencing already provides locally and instantly.
 
 - **Self-certifying identifiers** (committed as a property, Section 3): authenticating an identifier is local verification of key possession, so name-spoofing is cryptographically impossible rather than checked. The concrete construction (raw encoded key, digest of key, or a rotation-surviving derivation) is open question 11.
 - **Capability tokens** (UCAN-style): decentralised, offline-verifiable, local-first delegation chains for Section 4 authority.
