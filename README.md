@@ -45,11 +45,11 @@ Murmuration is not a stack; it is a contract. It defines no radio, network, or t
 
 Each neighbouring system owns one or two of these concerns. None owns the contract that spans them, and none declares behaviour on failure:
 
-| | Transport / pub-sub | Identity | Authority (delegable, revocable) | Declared failure semantics |
-|---|---|---|---|---|
-| Best-in-class today | Zenoh, DDS | SPIFFE, DIDs | UCAN, Keyhive | *none* |
+| | Transport / pub-sub | Identity | Authority (delegable, revocable) | Secure update dissemination | Declared failure semantics |
+|---|---|---|---|---|---|
+| Best-in-class today | Zenoh, DDS | SPIFFE, DIDs | UCAN, Keyhive | TUF, Uptane | *none* |
 
-Murmuration is designed to **compose with these, not replace them**. Transport can be Zenoh, DDS, or raw UDP; authority can be UCAN-style tokens; identity can be SPIFFE or a DID. The protocol declares the contract; the substrates move the bytes and sign the keys. Because there is no clear winner among transports, identity layers, or authority schemes (and there may never be), a layer that composes over all of them treats that fragmentation as an advantage: every existing deployment is a potential host rather than a competitor to displace, and adoption adds a contract layer rather than ripping anything out.
+Murmuration is designed to **compose with these, not replace them**. Transport can be Zenoh, DDS, or raw UDP; authority can be UCAN-style tokens; identity can be SPIFFE or a DID; update verification adopts the discipline TUF established and Uptane carries into vehicles. The protocol declares the contract; the substrates move the bytes and sign the keys. Because there is no clear winner among transports, identity layers, or authority schemes (and there may never be), a layer that composes over all of them treats that fragmentation as an advantage: every existing deployment is a potential host rather than a competitor to displace, and adoption adds a contract layer rather than ripping anything out.
 
 ## Longevity and ownership
 
@@ -60,6 +60,8 @@ This is the murmuration in the name: a flock remains itself while every starling
 Two mechanisms make this concrete. The **owner, not the manufacturer, is the ultimate root of trust** for their own device. And **trust authority is transferable by attested update**: a dying vendor's last act can attest a transfer of authority to the owners, or to a community or successor, so devices that trusted the vendor now trust the new authority by the same mechanism that always governed them, with no special abandonment mode and no consortium to re-list. Authority itself becomes a replaceable component.
 
 Grounded in the physical world, this is the salvage case: a component pulled from a breaker's yard can be reset by hand and adopted into a new system by whoever now holds it, with no manufacturer, account, or computer in the loop, and it can always be reset again, so physical possession stays the final authority. Owning a salvaged part is not the same as admitting it into a safety-critical role, which remains a deliberate, attested step, so repairability and safety are not traded against one another.
+
+The same continuity test applies to software. A device that outlives its maker must keep receiving definitions and security fixes safely for decades, so update dissemination is core machinery rather than vendor plumbing. Definitions are content-addressed and signed: they verify identically whether they arrive from an open commons, a private registry, a peer, or a USB stick, with no origin server alive. And there is no separate rollout-safety subsystem. An update that cannot be verified or completed leaves the device in its declared safe state; activation is gradual, canaried, and reversible by design; a breaking change is handled as a semantic disconnection by the same machinery as a dropped link. The hard mechanics (the compatibility relation, delivery to constrained and intermittently connected devices, canarying without a coordinator, updates with physically irreversible effects) are named open questions in the specification, worked in the open rather than left to each vendor to rediscover.
 
 The promise here is continuity for the owner, not a stance against the manufacturer. Longevity and interoperability are properties a manufacturer can build on and sell. Friction arises only with business models that depend on the opposite of longevity, and that friction is a side effect of keeping the promise to the owner, not its purpose.
 
@@ -73,7 +75,7 @@ A device is discovered but not yet bound. It is bound, and notes flow. Its autho
 
 **Legibility is a longevity requirement, not an aesthetic.** A mechanism that only its original author can understand or repair is already abandoned. A carburettor or a vacuum-advance still works decades on because a competent stranger can open it, understand it, and repair it with ordinary tools. Legibility trades against capability (fuel injection genuinely beats a carburettor), so the trade is made deliberately rather than by reflex, and "could a competent stranger reimplement this from the specification alone, decades from now" is treated as a requirement.
 
-**No software layer is the final safety authority.** Every check in the protocol (signatures, fencing, canaried rollout, behavioural envelopes) raises the cost of casual, remote, and accidental failure, and every one is circumventable by a sufficiently motivated actor. This is intended: an unbreakable constraint with ill-conceived parameters is its own catastrophe. The stack therefore terminates not in an ever-smarter check but in a dumb, physical, out-of-band override (an E-stop, a manual disconnect, a fuse) that makes no decisions, that the protocol neither mediates nor can disable, and that a physically present authorised actor can always reach.
+**No software layer is the final safety authority.** Every check in the protocol (signatures, fencing, canaried activation, behavioural envelopes) raises the cost of casual, remote, and accidental failure, and every one is circumventable by a sufficiently motivated actor. This is intended: an unbreakable constraint with ill-conceived parameters is its own catastrophe. The stack therefore terminates not in an ever-smarter check but in a dumb, physical, out-of-band override (an E-stop, a manual disconnect, a fuse) that makes no decisions, that the protocol neither mediates nor can disable, and that a physically present authorised actor can always reach.
 
 **Incentive alignment over enforcement.** Most of the design is one idea: the burden falls on the party that gains the most from a decision, so that the selfish choice and the social good converge. A manufacturer that insists on locking parts down is thereby required to build a real security fabric, which is also what makes the product theft-resistant; an owner who gains autonomy bears the trust decision. The protocol couples selfish to social and makes harm legible; it does not compel virtue. It aligns around structural, near-universal goods (theft-resistance, longevity, honest accounting, interoperability), and for contested values it witnesses and records rather than adjudicating.
 
@@ -87,7 +89,7 @@ The lineage is MANET and swarm robotics (decentralised, no required infrastructu
 
 ## Contributing
 
-The specification lives alongside this README, with its open questions stated honestly. The most useful contributions at this stage are objections to those open questions, field accounts from domains that feel the underlying pain (embedded fleets, shared physical resources, updates that cascaded into failure), and demonstrations that extend the witness into a harder corner.
+The specification ([spec.md](spec.md)) and its rationale ([primer.md](primer.md)) live alongside this README, with the open questions stated honestly in the specification. The most useful contributions at this stage are objections to those open questions, field accounts from domains that feel the underlying pain (embedded fleets, shared physical resources, updates that cascaded into failure), and demonstrations that extend the witness into a harder corner.
 
 This specification was drafted with heavy use of AI; the intent behind it is the author's. Contributors are sought to refine both.
 
