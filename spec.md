@@ -33,6 +33,8 @@ The protocol normatively specifies the contract and its verification: what a val
 
 One constraint shapes everything below: local-first is strongest exactly where stakes are highest. Drivetrain motion control and grid anti-islanding must not depend on a cloud round trip. Resilience and safety are derived from local reasoning plus declared safe defaults, never from the reachability of a central authority.
 
+A second constraint sets the protocol's deepest boundary: Murmur bounds consequences and attributes actions. It does not evaluate correctness, in any realm. A declared safe state, a fencing token at the resource, a canary halt, and the forensic record each bound what a wrong, stale, or hostile action can do, and each records who did it. None of them judges whether the action was right. Correctness lives in an authority the protocol defers to: a test suite, a ledger, a safety monitor, a human reviewer, or the physical floor itself. The protocol's role is to require that authority where the stake demands it, to verify that its assent was given and recorded, and to fall to a declared safe state when it is absent or unreachable. Declared failure semantics is one instance of this stance, not a separate promise. It is consequence-bounding given a physical floor to bound against; where no such floor exists, the bounding is weaker, and correctness must come from an authority outside the protocol. The grounding and the cross-realm argument are in the primer.
+
 ## 2. Conventions and terminology
 
 The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY, and OPTIONAL in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
