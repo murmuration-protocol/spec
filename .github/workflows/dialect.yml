@@ -1,0 +1,13 @@
+name: dialect
+
+# Thin wrapper around tools/check-dialect.sh so the same check runs locally and in CI.
+on: [push, pull_request]
+
+jobs:
+  british-spelling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check British (Oxford) spelling
+        # Invoke via sh so the check runs regardless of the file's executable bit.
+        run: sh tools/check-dialect.sh
