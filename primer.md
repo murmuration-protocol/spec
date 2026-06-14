@@ -13,6 +13,7 @@ Readers new to the project should start with the [README](README.md), which expl
 - [Why attestation and exclusion are coupled](#why-attestation-and-exclusion-are-coupled)
 - [Why there is no consortium](#why-there-is-no-consortium)
 - [The incentive engine, applied](#the-incentive-engine-applied)
+- [A worked quorum: settlement over ephemeral nodes](#a-worked-quorum-settlement-over-ephemeral-nodes)
 - [The threat model: abandonment, obsolescence, poison](#the-threat-model-abandonment-obsolescence-poison)
 - [Canarying without a coordinator](#canarying-without-a-coordinator)
 - [Why declared failure semantics are the core](#why-declared-failure-semantics-are-the-core)
@@ -140,6 +141,14 @@ And two named traps the design refuses to build:
 
 - **Reputation as a gate.** Owner-held attestation plus the forensic record make verifiable track records possible, but a required or central reputation score re-monopolizes (incumbents accrue reputation new entrants cannot), invites gaming, and rebuilds the consortium by the back door. Reputation is admissible only as one owner-evaluable signal among many, never a gate.
 - **The morality engine.** Aligning around contested values turns the protocol into an arbiter. The line is held: align around structural, near-universal goods; witness everything contested.
+
+## A worked quorum: settlement over ephemeral nodes
+
+A settlement transfer is the clearest illustration of the attestation model (specification, Section 4.8), because it stresses every part of it at once. A transfer needs two assents, the sending institution and the receiving one. That is a two-of-two quorum with non-interchangeable roles, the named-few end of the membership spectrum. A public blockchain is the same gate at the open, sybil-resistant end, where the members are anonymous and work or stake is what keeps the set from being faked.
+
+The institutions are the members, not the machines. A bank is a durable principal and holds a seat, while the node that actually signs may be one of hundreds of ephemeral pods that restart and take a fresh identity each time. The pods are not in the quorum. Each carries a short-lived delegation from its institution's key, so a vanished pod's authority simply lapses and the bank delegates afresh, with no change to the quorum contract. A quorum of stable principals runs, unchanged, over a churning fleet beneath it. This is the grandfather's axe applied to a quorum member, and it is the concrete shape of settlement without a central clearing house (open question 25): the seats are stewarded, and the steward of who-is-in can itself sit off the data path.
+
+The gate is assent, not outcome, and that distinction is where real systems live. A sender short of funds declines, and the refusal is not silence to be timed out but a signed negative that travels back and unstages whatever the other side had prepared. Even two assents settle nothing on their own, because agreement that a transfer should happen is not the durable fact that it did. Finality is a write to the ledger the protocol defers to, and a lost confirmation is resolved by reading that ledger, never by re-running the quorum. The protocol carries the requirements, witnesses the record, and yields the truth of the balance to the source of truth, exactly as it yields physical safety to the actuator floor.
 
 ## The threat model: abandonment, obsolescence, poison
 
