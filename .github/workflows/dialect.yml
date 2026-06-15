@@ -1,6 +1,6 @@
-name: dialect
+name: lint
 
-# Thin wrapper around tools/check-dialect.sh so the same check runs locally and in CI.
+# Thin wrappers around the tools/ checks so the same checks run locally and in CI.
 on: [push, pull_request]
 
 jobs:
@@ -11,3 +11,13 @@ jobs:
       - name: Check British (Oxford) spelling
         # Invoke via sh so the check runs regardless of the file's executable bit.
         run: sh tools/check-dialect.sh
+
+  section-refs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Check section cross-references resolve
+        run: python3 tools/check-refs.py
