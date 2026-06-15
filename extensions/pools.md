@@ -60,7 +60,7 @@ Stateful capabilities make pure selection insufficient: a freshly promoted stand
 
 ## The pool-backed virtual steward
 
-A pool is a logical principal, not necessarily a physical node; its logic is co-located at the steward boundary. A free-standing pool component is a single point of failure holding the very state the pool exists to protect.
+A pool is a logical principal (the virtual principal of Section 9.3), not necessarily a physical node; its logic is co-located at the steward boundary. A free-standing pool component is a single point of failure holding the very state the pool exists to protect.
 
 The recursion bottoms out. Pools and topics close under composition (a pool of pools, a steward of stewards), but there is always a root steward whose liveness is the trust anchor, made reliable by other means than another pool. There is deliberately no coordinator-of-the-whole to promote anything into.
 
