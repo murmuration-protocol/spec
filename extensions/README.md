@@ -16,8 +16,11 @@ Two invariants keep the structure honest:
 ## The extensions
 
 - [settlement.md](settlement.md): per-event attestation, quorum structure, and the stage, assent, commit, and finality lifecycle. Required only for multi-party settlement and conserved-value finality. Deepens core Section 4.8.
-
-Further extensions land here as the mechanisms they govern are needed: pools and state handoff (core Section 9), ownership transfer machinery (core Section 4.6), and coordinator-free activation (core Section 7.5). Until then they are reserved seams in the core, named but not deepened.
+- [pools.md](pools.md): the redundancy pool, the candidate state machine, state projection and handoff, and the pool-backed virtual steward. Required only for multi-member failover. Deepens core Section 9.
+- [ownership.md](ownership.md): propagation through intermediaries, transfer failure recovery, salvage, the containment pole, and the compute floor. Required only for ownership transfer beyond first commissioning. Deepens core Section 4.6.
+- [updates.md](updates.md): distribution, the trust model for received updates, fleet propagation, and coordinator-free canaried activation. Required only for implementations that update definitions in the field. Deepens core Section 7.2.
+- [federation.md](federation.md): cross-regime trust, the harder election tiers, rootless topologies, and multi-principal arbitration. Required only for systems that span more than one trust domain or have no single steward. Deepens core Sections 4.4, 8.4, 9.2, and 10.
+- [forensic.md](forensic.md): the immutable, tamper-evident audit record. Required only where stakes justify reconstruction (liability, regulation). Deepens core Section 12.
 
 ## Reserved seams
 

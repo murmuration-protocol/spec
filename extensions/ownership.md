@@ -10,7 +10,7 @@ The core keeps the lifecycle axioms (Section 4.6) and the rule that physical pre
 
 ## Propagation through intermediaries
 
-Subordinate devices with no uplink of their own receive owner-signed changes relayed through intermediaries. Acceptance is content-trusted and relay-agnostic: the subordinate verifies the owner's signature, never the relay's say-so. Trusting the relay would let a compromised intermediary hijack ownership of everything behind it (see Section 7.3). Propagation is eventually consistent; mixed states are safe in the interim.
+Subordinate devices with no uplink of their own receive owner-signed changes relayed through intermediaries. Acceptance is content-trusted and relay-agnostic: the subordinate verifies the owner's signature, never the relay's say-so. Trusting the relay would let a compromised intermediary hijack ownership of everything behind it (see Section 7.2: transport trust is never content trust). Propagation is eventually consistent; mixed states are safe in the interim.
 
 ## Transfer failure modes
 
