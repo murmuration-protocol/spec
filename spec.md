@@ -36,6 +36,8 @@ A second constraint sets the protocol's deepest boundary: Murmur bounds conseque
 
 A third constraint caps complexity: node-side evaluation is total and statically bounded, never Turing-complete. Configuration is declarative data by default, matched by fixed code (the declare, require, match shape, Section 6). A restricted total predicate language is admitted only where a node must test runtime state it could not know at design time, such as a conditional safe state, a readiness gate, or a subscription filter, and on the safety-critical path the full branch tree is fixed and certifiable when the role is designed (Section 8.2). Authoring-time generation may be programmatic, but it adds no expressiveness a definition could not state directly (Section 7.1). The detail and its litmus test are in Section 7.3.
 
+A fourth constraint keeps the hardware floor low: time is local and relative, never globally synchronized. Ordering and authority-at-a-point are logical, carried by the monotonic sequence that fencing already uses (Section 10) rather than a clock. Durations, liveness intervals, and grant expiry are measured as local elapsed time from a local event (receipt, the last heartbeat), so they need only a local timer, tolerate arbitrary clock skew, and hold correctly on a device that has been offline for years. A synchronized absolute clock is never required; wall-clock time is optional metadata, captured where a node has it and never depended on.
+
 ## 2. Conventions and terminology
 
 The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY, and OPTIONAL in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
