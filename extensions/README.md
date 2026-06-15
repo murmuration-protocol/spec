@@ -24,7 +24,7 @@ Two invariants keep the structure honest:
 
 ## Reserved seams
 
-The core names several mechanisms it does not yet deepen: content-based routing (Section 8.5), heterogeneous capability composition (Section 15.1), confidential and authenticated discovery (Section 4.7), and transport bindings (a future `bindings/` directory). Each becomes an extension when an implementation needs it. Nothing in the core forecloses them.
+The core names several mechanisms it does not yet deepen: content-based routing (Section 8.5), heterogeneous capability composition (Section 15.1), confidential and authenticated discovery (Section 4.7), and transport profiles and bridges (Section 6.3). The per-substrate profile catalogue and the bridge mechanics will land in a future `profiles/` directory (named to avoid colliding with "binding", the core's term for authority admission). Each becomes an extension when an implementation needs it. Nothing in the core forecloses them.
 
 ## A note on ownership
 
