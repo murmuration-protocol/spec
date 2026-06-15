@@ -82,6 +82,14 @@ That external authority is the unifying object. A test suite, a ledger, a safety
 
 This is why a universal or pluggable test of correctness is rejected rather than deferred. A universal one is forbidden by Rice's theorem, the same wall as the halting problem. A pluggable one, looked at closely, is not a correctness check at all. It is the stake-scaled authority ladder (specification, Section 4.2) under a more honest name. Calling it correctness would re-import the claim the whole design refuses, that the protocol knows something it cannot. The honest version is already in the specification.
 
+### Require nothing you cannot attest
+
+The boundary above says what the protocol does not do: it constrains declared and attested claims, never real-world effects. The constructive corollary says what the design must therefore do. A requirement the protocol cannot verify is not a requirement, it is a wish, so wherever such a property is wanted, the design re-architects until it no longer depends on it.
+
+Device identity is the worked example. The specification once leaned on on-device key generation to stop a manufacturer holding a device's key, and on per-device attestation to name a unique part. Neither is attestable: on-die generation is a manufacturing fact no signature reveals, a key is copyable information, and the industry's own per-device attestation is often deliberately non-unique (FIDO's basic attestation shares one attestation key across a whole batch of authenticators, precisely so an individual device cannot be fingerprinted). So uniqueness was dropped as a requirement, and the property actually wanted turned out not to need it. Bounded, owner-controlled authority lives in a key-bound grant the owner issues and can expire, not in the uniqueness of the part. A cloned key buys impersonation, never authority, and the residue, anti-counterfeit, is handed honestly to the secure-element regime and to deployment-time witness, neither of which the protocol pretends to provide.
+
+The rule generalizes. Any design step of the form "and then the part generates or guarantees a unique X" should be read as a wish until something attestable backs it, and re-architected until the wish is not load-bearing.
+
 ### The incentive-alignment engine
 
 Most of the specification's seemingly separate decisions are one thing: an engine that makes the selfish choice and the social good inseparable, rather than enforcing virtue. The mechanism is a single stance: **the burden falls on the party that gains the most from a decision.**
