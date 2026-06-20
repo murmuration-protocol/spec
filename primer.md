@@ -64,6 +64,14 @@ The analogy has a stated limit: it holds for build-versus-specify, not for trust
 
 Drivetrain motion control and grid anti-islanding must not depend on a cloud round trip. Resilience and safety are derived from local reasoning plus declared safe defaults, never from the reachability of a central authority. This is also, structurally, the anti-obsolescence stance: a system with no required centre has no centre to switch off.
 
+### Separate what fails differently
+
+Two needs with opposite requirements must not share one mechanism. A mechanism tuned for one is wrong for the other, and sharing it couples two things that should be free to fail and change independently. Live events want low latency and tolerate loss, while identity and configuration want reliability and tolerate delay, so they run as two planes with no shared machinery (specification, Section 5). The same cut recurs throughout: discovered feature against granted authority (the split below), the operational record against the forensic one, the artifact a human writes against the bytes a machine verifies, and a principal's continuity against its authorization. Each reads as a separate rule and is one law, named in the specification as the separation law (Section 1). Most of the model's "must not collapse these" requirements are that single principle applied to a new pair.
+
+### Build the general case; run the degenerate one
+
+The model is defined at its general shape, and the simple case is recovered as a limit of it, never the other way round. A slot is a topic with one steward and one binding, a lone node is a virtual principal with one member, and the witness's single steward is exclusive failover at a population of one. Defining the simple case as the base would bake its assumptions (one owner, one failure root, one key) into everything above it, and each would have to be torn out when a second participant arrived. Defined as a limit instead, the simple case exercises the real mechanism with the contended parts dormant. The witness is then the abstraction running at population one, not a special path that later needs replacing (specification, Section 1, the degenerate-case law). It is also the strongest evidence the abstraction is real: the day a second contender appears, the same code produces a higher fencing term and refuses the stale actor, with nothing new written.
+
 ### Cede control, retain witness
 
 Nodes interact with the physical world through channels Murmur neither owns nor mediates: a speaker and a microphone, heat and a thermal sensor, voltage on a shared bus. Emergent coordination through those channels is legitimate and expected. Applause is the canonical human example: a wave of synchronized clapping ripples through an audience with no conductor, through a channel nobody administers. The protocol does not try to bring such coordination inside. Doing so is impossible (nodes cannot be stopped from sensing each other physically) and would violate the legibility budget.
@@ -294,6 +302,6 @@ The status matches the datacenter case: unvalidated, and not the wedge. Cyber-ph
 
 The specification is written to be objected to. Its open questions section is not an appendix of loose ends; it is the working surface, and several of its entries (persistent system identity through total churn; owner re-rooting versus certification; the fast-versus-supervisory boundary; making graceful exit cheaper than disappearing) are the deepest design problems in the project. Where prose elsewhere touches one of them, it is presented as open and inviting objection, not as solved.
 
-The model is deliberately maximal up to a named ceiling (specification, Section 15.1) and minimal in what the witness actually builds. The discipline for growth is fixed: new needs should arrive through the reserved seams (predicate subscriptions, the capability shape type, the steward-of-stewards recursion), not by reopening the spine.
+The model is deliberately maximal up to a named ceiling (specification, Section 15.1) and minimal in what the witness actually builds, which is the degenerate-case law at work (specification, Section 1). The discipline for growth is fixed: new needs should arrive through the reserved seams (predicate subscriptions, the capability shape type, the steward-of-stewards recursion), not by reopening the spine.
 
 The most useful contributions at this stage are objections to the open questions, field accounts from domains that feel the underlying pain, and demonstrations that extend the witness into a harder corner.
