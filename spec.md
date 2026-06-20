@@ -38,6 +38,10 @@ A third constraint caps complexity: node-side evaluation is total and statically
 
 A fourth constraint keeps the hardware floor low: time is local and relative, never globally synchronized. Ordering and authority-at-a-point are logical, carried by the monotonic sequence that fencing already uses (Section 10) rather than a clock. Durations, liveness intervals, and grant expiry are measured as local elapsed time from a local event (receipt, the last heartbeat), so they need only a local timer, tolerate arbitrary clock skew, and hold correctly on a device that has been offline for years. A synchronized absolute clock is never required; wall-clock time is optional metadata, captured where a node has it and never depended on.
 
+Two further constraints govern how the model is built rather than what it does, and both recur by name throughout. The fifth is the **separation law**: two needs with opposing requirements never share machinery. One mechanism serving both a live need and a durable one, or a discovered fact and a granted one, corrupts both, so the model splits such pairs and keeps them split. Several splits below are each one instance of this law, not a separate rule: discovered versus granted authority (Section 4.1), the control and real-time planes (Section 5), the authoring, contract, and wire layers (Section 7.1), the recovery and forensic planes (Section 12), and continuity versus authorization (Section 9.3).
+
+The sixth is the **degenerate-case law**: the general shape is defined first, and the common case is recovered as its degenerate instance, never the reverse. A slot is a capacity-one topic (Section 8), a single binding is a capacity-one pool (Section 9), a lone node is a one-member virtual principal (Section 9.3), and the witness's single steward is exclusive failover at a population of one (Section 10). Defining the simple case as the base instead would leak its assumptions, one owner, one failure root, one key, into everything layered above. The simple case is therefore the abstraction running at its limit, so the witness exercises the real mechanism and a second participant needs no new code.
+
 ## 2. Conventions and terminology
 
 The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY, and OPTIONAL in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
@@ -81,7 +85,7 @@ An identifier is **self-certifying** when, given the identifier and a live peer,
 
 ### 3.1 Producer and consumer are per-edge labels
 
-A node exposes a set of capabilities, some provided and some required. "Producer" and "consumer" describe the role relative to one capability on one edge, never the node as a whole. A bidirectional relationship is two ports, not one duplex channel, because the two directions fail independently. Each direction MUST carry its own declared safe state and its own liveness contract.
+A node exposes a set of capabilities, some provided and some required. "Producer" and "consumer" describe the role relative to one capability on one edge, never the node as a whole. A bidirectional relationship is two ports, not one duplex channel, because the two directions fail independently. Each direction MUST carry its own declared safe state and its own liveness contract. Edge direction is therefore a corollary of declared, per-edge safe state (Sections 8.2, 13.1), not an independent primitive: because the two directions fail independently, each needs its own safe state, and that is what makes them two edges rather than one duplex axis. It is counted among the four axes of Section 3 because keeping the directions distinct is a test a reimplementer must apply, not because it is irreducible.
 
 The slot or topic contract owner is the steward (Section 8). Implementations and documentation MUST NOT use "consumer" for that role; the steward need be neither on the data path nor the receiving end.
 
@@ -96,7 +100,7 @@ Every capability declares one of three shapes in its contract:
 
 ### 4.1 The central split
 
-Two meanings of "capability" are kept rigorously separate:
+Two meanings of "capability" are kept rigorously separate, in the most important instance of the separation law (Section 1):
 
 - **Feature-capability**: what a thing is. Self-describing, discovered, ambient by default (Section 4.7).
 - **Authority**: whether a thing may participate in a given function. Granted, never discovered.
@@ -191,7 +195,7 @@ Presence buys only Layer 1, only at the one bootstrap moment where no key relati
 
 Feature-capability is discovered, and by default discovery is ambient. Announcing a capability is itself stake-bearing for some nodes: it can leak topology to passive listeners and solicit probing of high-stake targets. Discovery visibility is therefore a per-capability declared property with three rungs: **ambient** (the default), **authenticated-before-disclosure** (announce only a key; reveal capabilities to an authenticated peer), and **no-broadcast rendezvous** (advertise nothing; a legitimate initiator connects to a known endpoint and authenticates first).
 
-This is attack-surface reduction only. Hiding is not securing: a node MUST refuse unauthorized commands regardless of its discovery visibility, and reduced visibility MUST NOT stand in for granted authority. The seam is reserved; only the ambient rung is required (open question 26).
+This is attack-surface reduction only, never a second authority mechanism. Hiding is not securing: a node MUST refuse unauthorized commands regardless of its discovery visibility (Section 4.1), so reduced visibility cannot substitute for granted authority. Only the ambient rung is required; the stricter rungs are a reserved seam (open question 26).
 
 ### 4.8 Attestation authority
 
@@ -207,7 +211,7 @@ The internal structure of the authority, the standing and ephemeral quorum forms
 
 ## 5. The two planes
 
-Live event delivery and identity/capability/configuration state have opposite requirements and MUST NOT share machinery.
+Live event delivery and identity/capability/configuration state have opposite requirements and MUST NOT share machinery (the separation law, Section 1).
 
 | | Control / identity / capability plane | Real-time event plane |
 |---|---|---|
@@ -251,32 +255,24 @@ Profiles are drawn from a small, named, public catalogue, stewarded like the def
 
 ### 6.4 Bridges
 
-**A bridge joins two profiles.** A **bridge** is a node that speaks two profiles and relays a contract across them. It is the only construct that needs more than one. What a bridge may and may not do follows from existing core rules, not from new bridge machinery (open question 35):
+**A bridge joins two profiles.** A **bridge** is a node that speaks two profiles and relays a contract across them. It is the only construct that needs more than one. A bridge needs no new machinery; what it may and may not do follows entirely from existing core rules (open question 35).
 
-- **Carried authority and authenticity cross unchanged.** A key-bound grant (Section 11), a per-property attestation (Section 4.8), and a content-addressed signed definition (Section 7.2) verify offline against a key, independent of the substrate that carried them. A bridge relays them as opaque signed content and confers zero authority on them, exactly as any relaying peer does (Section 7.2: transport trust is never content trust). A bridge MUST NOT re-sign carried content, because re-signing a grant or a definition forges its provenance. Fencing tokens (Section 10) pass through the same way, and the resource keeps enforcing them against their original granting authority.
-- **Ambient authority cannot cross.** Presence-based authority (Section 4.2, rung 1) means something only on the substrate that defines the presence, since being on a CAN bus is not being on an IP network. A bridge cannot carry it. Where authority must continue across the bridge, the bridge re-establishes it under the target profile. That re-establishment is a binding (Section 8) the bridge performs as a principal, so it is an owner-visible, forensically logged trust act (Section 4.5), subject to the same admission and attestation rules as any other binding. A bridge that re-originates authority becomes a new granting authority, and fencing re-scopes to it (Section 10).
-- **The transport match must hold end to end.** A capability requiring low-latency ordered delivery is not satisfied by bridging through a lossy, high-latency leg. A bridge MUST advertise only the capabilities whose required transport properties its two legs jointly satisfy, and the match refuses the rest.
-- **Bridge failure is two stale edges.** A bridge is two edges, each with its own liveness contract and declared safe state (Section 3.1). Its death fires each side's safe state by the ordinary dead-man's switch (Section 13.1), introducing no new failure mode.
+- **Carried authority and authenticity cross unchanged.** A key-bound grant (Section 11), a per-property attestation (Section 4.8), a content-addressed signed definition (Section 7.2), and a fencing token (Section 10) all verify offline against a key, independent of the substrate that carried them. A bridge relays them as opaque signed content and confers zero authority, exactly as any relaying peer does (Section 7.2). It MUST NOT re-sign carried content, because re-signing forges provenance, and the resource keeps enforcing each fencing token against its original granting authority.
+- **Ambient authority cannot cross.** Presence-based authority (Section 4.2, rung 1) means something only on the substrate that defines the presence. A bridge cannot carry it, and MUST re-establish it under the target profile as an ordinary binding (Section 8), which is an owner-visible, forensically logged trust act (Section 4.5). A bridge that re-originates authority thereby becomes a new granting authority, and fencing re-scopes to it (Section 10).
+- **The transport match must hold end to end** (Section 6.1). A bridge MUST advertise only the capabilities whose required transport properties its two legs jointly satisfy, and the match refuses the rest.
+- **Bridge failure is two stale edges** (Sections 3.1, 13.1). A bridge is two edges, each with its own liveness contract and declared safe state, so its death fires each side's safe state by the ordinary dead-man's switch and introduces no new failure mode.
 
-The bridge is therefore the deliberate, removable, accountable crossing point. Connectivity across substrates exists only where a bridge is placed, removing it restores the separation physically, and the crossing is the natural site for the policy and audit a trust boundary wants (Section 13.3). In the reference daemon a profile is a codec between one substrate and the abstract contract, and a bridge is two such codecs over the shared contract. The carried plane composes trivially. The native plane, ambient re-binding and the end-to-end transport match, does not, and that asymmetry is the point.
+The bridge is therefore the deliberate, removable, accountable crossing point. Removing it restores the substrate separation physically, and the crossing is the natural site for the policy and audit a trust boundary wants (Section 13.3).
 
-**A bridge fails safe, and runs redundant.** A bridge is never an unsafe single point of failure. By the rule above it is two edges, and its death fires each side's declared safe state. What it can be is an availability single point of failure, and that is removed by running more than one, along the same carried-and-native line.
+**A bridge's redundancy is the Section 9 pool patterns applied to a bridge.** It is never an unsafe single point of failure, since its death fires each side's safe state. It can be an availability one, removed by running more than one along the carried-versus-ambient line. A **carried-only bridge** holds no authoritative state, so it is a stateless relay, and both shapes of Section 9 apply. Run it all-active as a multiplicity slot, where every live bridge forwards and the consumer collapses duplicates, or as a redundancy pool behind one virtual identity, where one winner forwards and failover is promotion. The choice is an instance of open question 1. An **ambient-crossing bridge** re-originates authority, so it is a steward in all but name (Section 9.1), and it is made redundant the way a steward is. The options are a hardened fail-safe singleton, or a pool-backed virtual bridge identity (Section 9.3) under leader election and fencing (Section 10), so that only the current leader mints authority and a stalled predecessor's late grant is fenced out. In neither shape does the sender enumerate bridges or carry failover logic. It addresses the destination contract, or the pool's single virtual identity, exactly as it addresses any topic (Section 8).
 
-A **carried-only bridge is a stateless relay**, which makes both redundancy shapes of Section 9 available, chosen per capability (open question 1). It holds no authoritative state: carried content is self-verifying end to end, fencing high-water marks live at the resource, and safe states fire at the endpoints.
-
-Run **all-active** (multiplicity), several bridges forward the same message, and the destination receives one copy per live bridge. A single bridge death is then invisible: content and heartbeats keep arriving by the others, so nothing goes stale. The cost is duplicate egress the consumer must collapse, by content address on the control plane, where forwards are idempotent, and by sequence on the real-time plane. This suits a broadcast substrate, where every bridge hears the message ambiently, and low fan-out, where the duplication does not amplify.
-
-Run as a **redundancy pool**, the bridge set presents one virtual bridge identity (Section 9.1), one winner forwards, and a single copy crosses with no duplication. Failover is promotion within the pool, paid as detection latency rather than as duplicate traffic. This suits point-to-point or bandwidth-constrained egress, and high fan-out, where all-active would amplify.
-
-In neither shape does the sender enumerate bridges or carry its own failover logic. It addresses the destination contract, or the pool's single virtual identity, exactly as it addresses any topic or steward (Section 8). Bridge selection and failover live in the fabric or the pool, never pushed onto every sender. A design that made the sender pick a concrete bridge would scatter failover across all senders, and the protocol does not require it.
-
-An **ambient-crossing bridge re-originates authority** and is therefore stateful and authoritative, a steward in all but name (Section 9.1). It is made redundant the way a steward is, with the two options of Section 9.1. The first is a hardened singleton that fails safe. The second is a pool-backed virtual bridge identity, with leader election and fencing (Section 10), so that only the current leader mints authority and a stalled predecessor's late grant carries a stale token the resource rejects. Fencing is what makes the redundancy safe under momentary election ambiguity, with no global consensus. The pooled virtual bridge is the virtual-steward pattern again, one stable identity over a churning candidate set, which is the shape of open question 20. Redundancy costs redundant physical paths to both substrates, and which shape a given bridge takes, all-active multiplicity or promote-on-failure, is an instance of open question 1.
+The carried plane composes trivially. The native plane, the ambient re-binding and the end-to-end transport match, does not, and that asymmetry is the point.
 
 ## 7. Definitions and encoding
 
 ### 7.1 Three layers
 
-The artifact humans write, the abstract contract, and the artifact machines exchange are three different things, and none may masquerade as another.
+The artifact humans write, the abstract contract, and the artifact machines exchange are three different things, and none may masquerade as another (the separation law, Section 1).
 
 ```
 Authoring surface     ->   Contract definitions    ->   Wire encoding   ->   Transport
@@ -309,7 +305,7 @@ A pluggable policy (a promotion or election policy, or a multi-principal arbiter
 
 ## 8. Topics, slots, and binding
 
-The primitive is the **topic**; the **slot** is its degenerate case (one steward, capacity-1 binding). Defining it the other way around leaks two false assumptions into everything downstream: that the contract owner is on the data path, and that there is one failure root.
+The primitive is the **topic**; the **slot** is its degenerate case (one steward, capacity-1 binding), by the degenerate-case law (Section 1). Defining it the other way around leaks two false assumptions into everything downstream: that the contract owner is on the data path, and that there is one failure root.
 
 ### 8.1 Slot
 
@@ -385,7 +381,7 @@ One object recurs through this specification under several names: the pool-backe
 
 A virtual principal is an identity layer above the keys that currently control it, never a private key handed from node to node. A key is copyable information, and a divulged device-identity key violates Section 4.6.2, so continuity MUST NOT be carried by passing a key. Two constructions give an identity that outlives its current key: a controlling key that rotates forward through a signed key-event log (the rotation-surviving identifier of Section 3 and open question 11), and a threshold key whose holders reshare without changing the public identity (Section 11). They compose, and the composite is the candidate answer to the deep half of open question 20.
 
-Continuity and authorization stay on separate axes, the same discipline as Section 4.1. Continuity ("is this the same principal?") is an identity-axis question, answered by verifiable history. Authorization ("may this node act as the principal now?") is an authority-axis question, answered by a grant. A delegation answers only the second, and MUST NOT be made to carry the first. "Hold this grant and you are the same system" collapses two orthogonal axes into one, and is forbidden.
+Continuity and authorization stay on separate axes, the same discipline as Section 4.1 (the separation law, Section 1). Continuity ("is this the same principal?") is an identity-axis question, answered by verifiable history. Authorization ("may this node act as the principal now?") is an authority-axis question, answered by a grant. A delegation answers only the second, and MUST NOT be made to carry the first. "Hold this grant and you are the same system" collapses two orthogonal axes into one, and is forbidden.
 
 A virtual principal filled by more than one node is safe under a single rule: no two holders may exercise conflicting authority over the same resource at the same instant. Three shapes satisfy it, and one violates it.
 
@@ -409,7 +405,7 @@ The interface names one recurring shape, fixed once here so it is not redesigned
 
 The shape is satisfied at three populations, weakest machinery first, under the one contract.
 
-- **One trusted steward, trivially.** One eligible candidate and one issuer: "the steward picks" is the whole algorithm, the term is the binding itself, and fencing is present but dormant, since with one issuer and one candidate nothing is ever stale. This is the core default, and it is what the witness runs. The witness exercises the full shape at a population of one, not a special-cased shortcut. That is the proof the abstraction is real: the day a second contending candidate appears, the identical path produces a higher term and fences the stale one out, with no new code.
+- **One trusted steward, trivially.** One eligible candidate and one issuer: "the steward picks" is the whole algorithm, the term is the binding itself, and fencing is present but dormant, since with one issuer and one candidate nothing is ever stale. This is the core default, and it is what the witness runs. The witness exercises the full shape at a population of one, not a special-cased shortcut (the degenerate-case law, Section 1). That is the proof the abstraction is real: the day a second contending candidate appears, the identical path produces a higher term and fences the stale one out, with no new code.
 - **Peers by consensus.** Crash-fault election among peers with no trusted arbiter produces a leader and a term number together. Raft is one such mechanism, and a worked example using it, the bounded term in the constitutional dictator sense, is in the [federation extension](extensions/federation.md). The core requires no specific algorithm; Raft is an illustration of a satisfier, not the standard.
 - **A threshold of holders.** The term-holder is a k-of-n key held by no single node (Section 11), so the right to act survives the loss of any one holder and none is load-bearing.
 
@@ -433,7 +429,7 @@ That refusal concerns the real-time dispatch path, not finality everywhere. Fina
 
 ## 12. Recovery plane
 
-Operational state and the audit record are different artifacts with opposite requirements, and one mechanism cannot serve both without corrupting both. The **recovery plane** holds present operational state to survive failover: it is mutable, ephemeral, low-latency, in the failover path, and lives at the consuming endpoint or pool boundary (Section 9). It holds a note-on until its note-off and then forgets.
+Operational state and the audit record are different artifacts with opposite requirements, and one mechanism cannot serve both without corrupting both (the separation law, Section 1). The **recovery plane** holds present operational state to survive failover: it is mutable, ephemeral, low-latency, in the failover path, and lives at the consuming endpoint or pool boundary (Section 9). It holds a note-on until its note-off and then forgets.
 
 The **forensic plane** is the other half: the immutable, tamper-evident record that survives disputes. It is an optional sink, not baked into every node (a synth rig runs recovery only; a vehicle or grid system attaches a recorder because liability and regulation demand reconstruction), and its machinery is the [forensic extension](extensions/forensic.md).
 
@@ -468,6 +464,8 @@ This draft is not yet accompanied by a conformance suite, and its normative stat
 - A conforming implementation honours the contract model: it verifies identities, grants, attestations, and definitions as specified; keeps the four axes distinct; arms declared safe states at binding and fires them on loss of liveness; enforces fencing at resources; and keeps the mandated state (ownership, classification, grants, transfers) inspectable.
 - A product that presents the contract without honouring it (for example, one that never genuinely transfers ownership, or that hides a capability's stake classification) is non-conformant, and the specification is written so that such divergence is detectable from the outside.
 - Conformance composes. An implementation conforms to the core, to each extension whose feature it implements, and to each transport profile it speaks. A profile's conformance is judged against its published vectors (Section 6.3); a reference adaptor demonstrates them but does not define them.
+
+**The witness's active surface is six axioms.** The witness conforms to the core alone and runs only degenerate cases, so most of this specification is present but dormant for it. Fencing never fires, because with one issuer and one candidate nothing is ever stale. Election reduces to the steward picking, pools are capacity one, and the witness has one steward, one profile, no bridge, no per-event attestation, and no federation. What it actually exercises is six things: self-certifying identity (Section 3), the discovered-versus-granted split (Section 4.1), declared safe state fired by a dead-man's switch (Sections 8.2, 13.1), declare, require, match (Section 6), key-bound grants over content-addressed definitions (Sections 11, 7.2), and local relative time (Section 1). The rest is dormant but present, and the degenerate-case law (Section 1) guarantees that dormant machinery needs no new code when a second participant arrives.
 
 A precise conformance clause, with test vectors, follows once the open questions that gate it are closed.
 
