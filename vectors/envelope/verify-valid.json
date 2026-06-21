@@ -1,0 +1,9 @@
+{
+  "kind": "envelope-verify",
+  "description": "a signature produced over the canonical claims by the matching key verifies",
+  "spec": "7.2",
+  "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+  "claims_cbor": "a201010201",
+  "signature": "2c757158b9b555871c7418de0fac33ee5b6c537732ccad34dced431ec8b819649d01121817cae8eb5b83b30b8c361c50f03370b18c1f30dc3394f0d0e3a31708",
+  "valid": true
+}

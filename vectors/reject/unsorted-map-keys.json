@@ -1,0 +1,7 @@
+{
+  "kind": "reject",
+  "description": "a two-entry map with keys 2 then 1; canonical order sorts keys by encoded bytes, so 1 must precede 2",
+  "spec": "7.2",
+  "bytes": "a202000100",
+  "reason": "unsorted-map-keys"
+}

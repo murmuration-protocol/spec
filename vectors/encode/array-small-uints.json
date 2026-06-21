@@ -1,0 +1,11 @@
+{
+  "kind": "encode",
+  "description": "canonical encoding of a three-element array of small unsigned integers",
+  "spec": "7.2",
+  "value": [
+    1,
+    2,
+    3
+  ],
+  "cbor": "83010203"
+}

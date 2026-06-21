@@ -1,0 +1,10 @@
+{
+  "kind": "envelope-sign",
+  "description": "deterministic Ed25519 signature over canonical CBOR claims; the same key and message yield identical signature bytes in every implementation",
+  "spec": "7.2",
+  "note": "test seed from RFC 8032 (Test 1); the public key is checkable against the RFC; never a real key",
+  "seed": "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
+  "claims_cbor": "a201010201",
+  "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+  "signature": "2c757158b9b555871c7418de0fac33ee5b6c537732ccad34dced431ec8b819649d01121817cae8eb5b83b30b8c361c50f03370b18c1f30dc3394f0d0e3a31708"
+}

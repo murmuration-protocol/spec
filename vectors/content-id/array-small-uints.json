@@ -1,0 +1,7 @@
+{
+  "kind": "content-id",
+  "description": "SHA-256 content address of the canonical bytes 0x83010203",
+  "spec": "7.2",
+  "cbor": "83010203",
+  "sha256": "4abc31137ce738d9aceb8a1d1d51f15cad42c2b08dcb7ed179f737a194b355e7"
+}

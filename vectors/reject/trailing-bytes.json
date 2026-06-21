@@ -1,0 +1,7 @@
+{
+  "kind": "reject",
+  "description": "a single value 0x00 followed by a trailing 0x00; an artifact is exactly one data item",
+  "spec": "7.2",
+  "bytes": "0000",
+  "reason": "trailing-bytes"
+}

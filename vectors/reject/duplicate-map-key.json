@@ -1,0 +1,7 @@
+{
+  "kind": "reject",
+  "description": "a map encoding key 1 twice; duplicate keys are not well-formed for a strict decoder",
+  "spec": "7.2",
+  "bytes": "a201000101",
+  "reason": "duplicate-map-key"
+}
