@@ -24,7 +24,7 @@ Model:
 - Promotion policy is a pluggable slot-level declaration, the same shape as transport properties and election policy.
 - The data interface stays transparent through the virtual winner, but the control interface MUST emit promotion as an event: degradation reasoning depends on knowing what is currently live.
 
-A pool presents one capability while internally orchestrating many; this is capability composition, with the pool as the degenerate case where all sub-members satisfy the same interface. A composing node is a steward downward (to its members) and a producer or consumer upward (to its own steward) at once. Heterogeneous composition, where sub-members satisfy different interfaces, is recognized but deliberately out of model (Section 15.1).
+A pool presents one capability while internally orchestrating many; this is capability composition, with the pool as the degenerate case where all sub-members satisfy the same interface. A composing node is a steward downward (to its members) and a producer or consumer upward (to its own steward) at once. Heterogeneous composition, where sub-members satisfy different interfaces, is recognized but deliberately out of model (Section 15.2).
 
 ## The selection locus
 
