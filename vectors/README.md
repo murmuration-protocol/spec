@@ -2,7 +2,7 @@
 
 The vectors are the normative, language-neutral definition of the Murmur byte contract (Section 6.3). They live with the specification, not with any implementation, because a canonical encoding proven by a single implementation is unfalsifiable: it only ever agrees with itself. Two implementations checking the same vectors, each verifying artifacts the other signed, is what makes the contract real.
 
-These are the core encoding vectors: canonical CBOR, content-addressing, and the signed envelope (Section 7.2). Per-profile vectors, such as the carried-content round trip and fencing-token pass-through, are a profile's own conformance unit and live with the profile, not here.
+These are the core encoding vectors: canonical CBOR, content-addressing, and the signed envelope (Section 7.2). The prose rules these vectors make executable are the [canonical-encoding rules](../canonical-encoding.md). Per-profile vectors, such as the carried-content round trip and fencing-token pass-through, are a profile's own conformance unit and live with the profile, not here.
 
 ## Layout
 
