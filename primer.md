@@ -34,7 +34,7 @@ The names are load-bearing, not decorative. A starling murmuration is the canoni
 
 The lineage is MANET (mobile ad-hoc networking) and swarm robotics: no infrastructure, dynamic membership, route around partition, no required central ground. That posture is inherited deliberately. What is not inherited is MANET routing: Murmur is a contract, identity, and authority layer above whatever moves bytes, not a multi-hop routing protocol. A transport underneath it may itself be a mesh; Murmur is not in that business.
 
-One naming decision remains open (specification, open question 10): whether the globally visible package and binary name is `murmurd` or `murmuration`. The bare token `murmurd` carries a residual association with Mumble's VoIP server (historically named "Murmur") in the daemon register specifically. Inside the org path it disambiguates fully; the exposure is only where the binary name travels context-free.
+The reference implementation follows a per-language naming convention (specification, open question 10): `murmur-rs` first, then `murmur-go`, `murmur-haskell`, and so on, so that no single implementation wears the protocol's bare name. The daemon binary stays `murmurd`, the shared library is `murmur-core`, and the relay is `murmur-bridge`. The bare token `murmur` is deliberately kept off the command line. It carries a residual association with Mumble's VoIP server (historically named "Murmur"), and that echo would surface only where a binary name travels context-free. The per-language repos and prefixed artifacts avoid putting it there.
 
 ## The grandfather's axe
 
