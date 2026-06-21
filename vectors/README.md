@@ -47,3 +47,13 @@ Both `murmur-rs`, the reference implementation, and `murmur-go`, the conformance
 ## Status
 
 This is the first scaffold, and the byte values are real and self-checking. The Ed25519 public key matches RFC 8032 Test 1, and the reject cases follow the canonical CBOR rules of RFC 8949. The wire encoding is mandated by the spec (Section 7.1): deterministic CBOR with an owned signed envelope, versioned and algorithm-tagged. Schema-level vectors, a real grant and a real capability definition, land once those field tables are pinned.
+
+## Algorithm-agility negative cases (planned)
+
+The envelope and identifier carry an algorithm tag, so the suite MUST pin the anti-forgery rules of Section 7.1 as negative vectors, alongside the canonical reject cases. These are the load-bearing security fixtures: they make "an algorithm field an attacker can set is not a vulnerability here" falsifiable rather than asserted. They need the envelope and identifier header layout, so they land with it, not before. The required cases:
+
+- a tag naming no algorithm, or a missing signature, presented as unprotected: rejected. There is no unsecured form.
+- an algorithm tag altered outside the signed bytes: rejected, because the tag is covered by the signature and the content hash.
+- a signature valid under a different algorithm than the signer key declares: rejected. One key bears one algorithm.
+- a downgraded algorithm outside the verifier's allowlist: rejected as the verifier's policy.
+- a form-tag swap, presenting a digest-of-key identifier as a raw key or the reverse: rejected.
