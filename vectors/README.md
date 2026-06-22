@@ -22,6 +22,28 @@ Every file is a JSON object, self-describing, with a fixed field order: `kind`, 
 
 One split is worth keeping. Vectors against a fixed Murmur schema, such as a grant or a capability definition, carry a friendly named-field `value`, because the mapping from field name to CBOR key lives in the implementation, not the fixture. Vectors against the raw canonical-CBOR rules carry only hex, because there is no schema, just bytes and a verdict. The reject vectors are the second kind, and they are the most load-bearing: they are what makes "exactly one byte form is valid" (Section 7.2) falsifiable rather than aspirational.
 
+### Representing a value in JSON
+
+The `value` of an `encode` vector, and the named-field `value` of a schema vector, hold a logical value in JSON, not raw bytes. JSON carries most of the value domain directly, and a small tagged form reaches the rest. The tags mirror the authoring builtins (the Starlark `decimal()`, `rational()`, `bytes()`), so a fixture and a definition name the same construct.
+
+Plain JSON is the native subset:
+
+- a JSON integer is a CBOR integer;
+- a JSON string is a CBOR text string, written in Normalization Form C as the canonical rules require;
+- a JSON boolean is a CBOR boolean;
+- a JSON array is a CBOR array;
+- a JSON object with string keys is a CBOR text-keyed map. In a schema vector the keys are field names, which the implementation maps to integer wire keys; in a raw vector they are literal text keys.
+
+A single-key object whose sole key is a registered tag escapes into the types JSON cannot carry, or cannot tell apart:
+
+- `{"$bytes": "deadbeef"}` is a CBOR byte string, given as lowercase hex. A bare JSON string would be read as text, not bytes.
+- `{"$decimal": [scale, mantissa]}` and `{"$rational": [numerator, denominator]}` are a decimal and a rational. Both are a bare two-element integer array on the wire, so the tag is what tells them apart, and tells either from a plain array.
+- `{"$map": [[key, value], ...]}` is a map written as ordered key-value pairs, the form an integer-keyed map (or any non-text key) needs, since a JSON object admits string keys only.
+
+A single-key object whose key begins with `$` but is not a registered tag is an error, never a literal, so a mistyped tag fails loudly rather than encoding as a stray map. The four tags above are the registered set; more are added here as the value domain grows.
+
+The reject vectors take none of this. They carry only `bytes` and a `reason`, since their point is a byte sequence with no valid logical value to express.
+
 ### Kinds
 
 - `encode`: a `value` and its expected canonical `cbor`. Checked both ways, value to bytes and bytes to value.
