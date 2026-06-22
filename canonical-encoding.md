@@ -10,9 +10,8 @@ The encoding is deterministic CBOR (RFC 8949). This document restricts CBOR to a
 
 ## Scope of this draft
 
-This draft pins the **CBOR subset**, the **value domain**, and the **map-key rules**: the structural rules every canonical artifact obeys, the scalar values it may carry with the single byte form each reaches, and how a map's keys are typed and ordered. Three sections remain to be drafted, and the conformance vectors lead each:
+This draft pins the canonical form in four parts: the **CBOR subset**, the structural rules every artifact obeys; the **value domain**, the scalar values it may carry, each in one byte form; the **map-key rules**, how a map's keys are typed and ordered; and the **signed envelope and identifier layout**, the bytes a signature covers and the structure that names a key. Two sections remain to be drafted, and the conformance vectors lead each:
 
-- the signed envelope and identifier layout, with the signed-input boundary;
 - the algorithm-tag namespace and its reserved private range;
 - the unit vocabulary that schema fields reference by code.
 
@@ -145,3 +144,44 @@ A map MUST NOT carry the same key twice, and a decoder MUST reject one that does
 The keys of a map MUST appear in ascending bytewise lexicographic order of their encoded form: the encoded keys are compared as unsigned bytes, left to right, and the shorter sorts first where one is a prefix of the other. This is the map ordering of the core deterministic encoding of RFC 8949. A decoder MUST reject a map whose keys are out of this order. The `reject/unsorted-map-keys` vector pins this.
 
 The order is taken on the encoded key bytes, not on the decoded value, so a decoder checks it by comparing raw bytes as it reads, without interpreting a single key. For the integer keys of a fixed schema this is the plain numeric order, since a minimally encoded non-negative integer sorts bytewise exactly as it sorts by magnitude. For the text keys of an open map it is the bytewise order of the UTF-8. A map carries one key type, so the two orders never have to be reconciled against each other.
+
+## Signed envelope and identifier
+
+A signed artifact is claims plus a proof of who authored them. The claims are a canonical-CBOR map under the rules above. The proof is a signature over those claims by a key the reader can name and trust. This section pins the envelope that joins the two, and the identifier that names the key. It is the one part of the canonical form where a wrong byte boundary is a forgery and not a mismatch, so the boundary is stated exactly. The envelope is a minimal owned shape, a CBOR Web Token in all but the COSE wrapper (specification Section 7.1). COSE was declined as heavier than the requirement and unable to enforce the exactly-one-encoding rule that content-addressing needs.
+
+### The signed input
+
+The signature covers one canonical-CBOR **signing input**: the header and the claims together, in a field layout the conformance vectors pin. The header carries the format version and the issuer identifier. Placing both inside the signed bytes is what binds them. The version cannot be swapped to reinterpret the layout, and the issuer cannot be swapped to reattribute the claims, because either change invalidates the signature (specification Section 7.1). Only the signature byte string sits outside the signing input, since a signature cannot cover itself, and it rides alongside the signing input in the envelope.
+
+The signature is verified over the signing input exactly as received, never over a re-encoding of it. A verifier MUST NOT decode the artifact and re-encode it to obtain the bytes to check, because that puts its own encoder in the trusted path, where an encoder bug becomes a refused-but-valid signature or an accepted forgery. Canonicality is enforced as a separate gate: a decoder that finds the signing input non-canonical rejects it outright, before any signature check, by the receipt rule (specification Section 7.2). The signature is therefore checked against the exact bytes that arrived, and those bytes are already known to be canonical, because a non-canonical artifact never reaches the check.
+
+This is the posture a non-canonical format such as JSON must also take, signing and verifying the exact transmitted octets, since a re-encoding could differ. Authentication needs nothing more, and the single requirement canonicality adds, that those octets be the one valid byte form, does no work for the signature. It works for the content address (specification Section 7.2). Because every producer of the same logical artifact emits the same bytes, the artifact has one address across all of them, so its identity is reproducible by an independent implementation rather than tied to whoever first serialized it. That reproducibility, not the signature, is what the canonical form is bought for.
+
+### The content address
+
+An addressed artifact, such as a published capability definition, also carries a **content address**: a hash that names it independently of who signed it. The hash is taken over the claims body, so the same logical definition encodes to the same address regardless of its publisher (specification Section 7.2). That producer-independence is what lets a definition verify the same from the commons, a peer, or a USB stick, with no origin server alive. The signature and the content address are two operations with two purposes, authentication and naming, and they are kept distinct: the signature covers the header and the claims so the author and the version are bound, the address covers the claims body so it stays the same across authors.
+
+The address names its own hash algorithm in the reference that resolves it, taken from that trusted reference and never from the fetched bytes, so a substituted artifact cannot redirect verification to a weaker hash (specification Section 7.2). Any transport compression is outside this form, and is reversed before the hash or the signature is checked.
+
+### Algorithm rides with identity, not with the envelope
+
+The envelope carries no negotiable algorithm field. The signature algorithm is the one the issuer identifier declares (specification Section 3), and the hash algorithm is the one the content-address reference declares (specification Section 7.1). This is the PASETO posture: anti-negotiation realized by binding the algorithm to the identity, not by a cipher-suite field an attacker could set. The `alg: none` forgery and the key-confusion attack both need such a field, and the layout offers none to set.
+
+The format version sits in the signed input, and each algorithm tag sits where altering it breaks verification rather than redirects it: the signature algorithm in the issuer identifier the signature covers, the hash algorithm in the address reference the hash answers to (specification Section 7.1). The four anti-forgery rules of specification Section 7.1 follow from this layout, and the suite pins them as the algorithm-agility negative cases: there is no unsecured form, the algorithm is taken from the trusted anchor and never from the artifact under test, one key bears one algorithm, and a verifier enforces a local allowlist so downgrade-resistance is the verifier's to keep. The format version is a single integer, incremented only when these canonical rules or the envelope layout change, and a reader that does not recognize the version rejects the artifact rather than guess its layout.
+
+### Identifier layout
+
+The issuer identifier names the signing key in a self-describing, algorithm-tagged byte structure (specification Section 3). It carries two tags, kept distinct because they vary independently (the separation law, specification Section 1):
+
+- a **form tag**, selecting one of the three identifier forms;
+- an **algorithm tag**, naming the digest or key algorithm the form uses, drawn from the same namespace as the envelope and content-address tags.
+
+The three forms are one construction at three depths of history, the general shape with its degenerate cases (the degenerate-case law, specification Section 1):
+
+- the **rotation-surviving** form carries the digest of an inception event. The stable identifier is that digest, and a hash-linked key-event log, supplied alongside for verification, carries each rotation forward, so the identity outlives any single key.
+- the **digest-of-key** form carries a digest of the public key. It is the rotation-surviving form with an empty history, and the key is supplied alongside to check against the digest.
+- the **raw-key** form carries the encoded public key itself, the digest elided. It is self-contained but welded to one key algorithm.
+
+In every form the identifier is the compact, stable name. The bulky material it commits to, the key or the key-event log, travels alongside it in discovery or in the envelope, never inside the identifier, and a verifier accepts that material only when it hashes to the identifier. A digest identifier is welded to the hash that minted it, whose forgery resistance rests on second-preimage resistance, the property that outlives broken collision resistance (specification Section 3).
+
+The exact field order, the tag integers, and the encoding of each form are pinned by the conformance vectors and the algorithm-tag namespace, the next section to draft (open question 11). The existing `envelope/` vectors pin the verifiable core beneath this layout: a deterministic Ed25519 signature over canonical-CBOR claims, checked both as reproducible bytes and as a verify verdict. They sign the bare claims, the signing primitive, and the full envelope wraps that primitive with the header pinned here.
