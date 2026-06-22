@@ -298,6 +298,44 @@ Field keys are dense within each table, as shown above.
 
 Encoded under these codes, the three tables are the suite's most load-bearing fixture. Each decodes and re-encodes to identical bytes, the decoder refuses every non-canonical form, and decoding the meta-table yields exactly the field layout the meta-table is itself encoded in. The floor proves itself a fixed point. The bytes and their content addresses are pinned by the conformance vectors.
 
+## Interpretation refusals
+
+Interpreting an artifact against its field table is the validate half of decode-then-validate (Decode, then validate, above). It refuses for a different set of reasons than the byte decoder, and those reasons are named here as their own vocabulary. The two vocabularies are kept apart (the separation law, specification Section 1): the byte decoder refuses a malformed or non-canonical encoding (Refusal reasons, above) and knows no schema, while interpretation refuses an artifact that decodes cleanly but does not match the table its type and version declare. A reason here is a local diagnostic, never a wire field, exactly as at the byte layer.
+
+The reasons fall in three classes by what each is a function of. The byte layer had two, the bytes alone and a local bound. Interpretation adds a third, because presence is a property of an action and not of an artifact.
+
+### Artifact-determined reasons
+
+These reasons are a function of the artifact bytes and the version-closed field table. The table is itself normative, shipped not fetched (The floor is shipped, not fetched, above), so two conformant implementations interpreting the same artifact against the same table at the same format version reach the same reason. A schema reject vector pins it, and a conformant interpreter MUST report the named code for a refusal a vector pins.
+
+- `unknown-field-key`: a wire key the artifact's version-closed table does not define. A changed field set is a new format version, refused or understood whole, never a tolerated unknown (Decode, then validate, above).
+- `bad-field-key`: a text key where the table declares a fixed, integer-keyed schema. This is distinct from the byte layer's `bad-map-key-type`, which is a key that is neither integer nor text. A wholly text-keyed map is well-formed canonical CBOR, so the byte decoder passes it, and only the table says it should have been integer-keyed.
+- `type-mismatch`: a value whose structure is not the type its field declares, such as a text string where the field is an integer.
+- `bad-magnitude`: a field the table declares decimal or rational whose value is not a two-element array of integers (Structure on the wire, meaning in the schema, above).
+- `non-canonical-decimal`: a decimal outside its canonical form, a mantissa divisible by ten, or a zero in any form other than `[0, 0]` (Domain-declared magnitudes, above).
+- `non-canonical-rational`: a rational outside its canonical form, a denominator that is zero or negative, a numerator and denominator sharing a common factor, or a zero in any form other than `[0, 1]` (Rationals, above).
+- `malformed-type-descriptor`: a type-descriptor in the floor that omits what its kind requires, such as an array kind carrying no element type (The closure, above).
+
+The decimal and rational cases carry the same content-addressing weight as the byte-level reasons, one layer up. A magnitude has exactly one canonical form, so it has one content address. An interpreter that accepts a second form, the non-canonical `[-3, 150]` for the decimal `[-2, 15]`, forks that address along implementation lines, which is the fork the whole canonical form exists to forbid (The content address, below). They are therefore the load-bearing schema fixtures, and lead the schema reject vectors.
+
+### Capability-relative reasons
+
+One refusal depends on which tables an interpreter ships, not on the artifact alone:
+
+- `unresolved-ref`: a ref to an artifact type the interpreter holds no table for at the artifact's format version.
+
+A standard-range type at a recognized version resolves on every conformant node, since the standard tables are shipped by all of them. A private-range type (code 1024 and above, Pinned codes, above), or an unrecognized version, resolves on one node and not another. So two conformant interpreters may disagree here and both stay conformant, as with the byte layer's limit-relative reasons (Limit-relative reasons, above). A vector that exercises this states the table set it assumes. A node that cannot resolve a ref refuses to its safe state rather than acting on a shape it cannot read (The floor is shipped, not fetched, above).
+
+### Action-relative reasons
+
+One refusal depends on the action a party is about to take, not on the artifact at all:
+
+- `missing-required-field`: a field an actor needs to perform its action is absent.
+
+Presence is scoped to an action and a role, never asserted of the artifact's mere existence (Decode, then validate, above). A verifier exercising a grant requires the issuer, the audience, the capability, and the signature, and refuses one that lacks them. A relay forwarding the same grant requires none of them and refuses nothing. So this reason is never raised by interpretation itself, only by an acting party's presence gate, against the key set that party supplies. A vector for it declares the action and the keys the actor requires, never the artifact alone. This class has no analogue at the byte layer, where there is no action for a refusal to be relative to.
+
+Schema reject vectors land with the field tables they exercise, since each needs a table to interpret against (Status, in the vectors README). As at the byte layer, each fixture carries a single violation, so the reason it pins is unambiguous. When an artifact breaks more than one rule at once, which reason an interpreter reports is a matter of check order, and pinning that order is a separate decision the suite does not take by fixture.
+
 ## Signed envelope and identifier
 
 A signed artifact is claims plus a proof of who authored them. The claims are a canonical-CBOR map under the rules above. The proof is a signature over those claims by a key the reader can name and trust. This section pins the envelope that joins the two, and the identifier that names the key. It is the one part of the canonical form where a wrong byte boundary is a forgery and not a mismatch, so the boundary is stated exactly. The envelope is a minimal owned shape, a CBOR Web Token in all but the COSE wrapper (specification Section 7.1). COSE was declined as heavier than the requirement and unable to enforce the exactly-one-encoding rule that content-addressing needs.
