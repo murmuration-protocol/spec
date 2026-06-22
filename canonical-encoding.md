@@ -10,8 +10,9 @@ The encoding is deterministic CBOR (RFC 8949). This document restricts CBOR to a
 
 ## Scope of this draft
 
-This draft pins the canonical form in four parts: the **CBOR subset**, the structural rules every artifact obeys; the **value domain**, the scalar values it may carry, each in one byte form; the **map-key rules**, how a map's keys are typed and ordered; and the **signed envelope and identifier layout**, the bytes a signature covers and the structure that names a key. Two sections remain to be drafted, and the conformance vectors lead each:
+This draft pins the canonical form in five parts: the **CBOR subset**, the structural rules every artifact obeys; the **value domain**, the scalar values it may carry, each in one byte form; the **map-key rules**, how a map's keys are typed and ordered; the **schema model**, how a field table gives bytes their meaning and how it differs from a distributed definition; and the **signed envelope and identifier layout**, the bytes a signature covers and the structure that names a key. Three sections remain to be drafted, and the conformance vectors lead each:
 
+- the meta-table, and the field tables of the protocol artifact types it describes, the integer key each named field takes on the wire;
 - the algorithm-tag namespace and its reserved private range;
 - the unit vocabulary that schema fields reference by code.
 
@@ -154,6 +155,47 @@ A map MUST NOT carry the same key twice, and a decoder MUST reject one that does
 The keys of a map MUST appear in ascending bytewise lexicographic order of their encoded form: the encoded keys are compared as unsigned bytes, left to right, and the shorter sorts first where one is a prefix of the other. This is the map ordering of the core deterministic encoding of RFC 8949. A decoder MUST reject a map whose keys are out of this order. The `reject/unsorted-map-keys` vector pins this.
 
 The order is taken on the encoded key bytes, not on the decoded value, so a decoder checks it by comparing raw bytes as it reads, without interpreting a single key. For the integer keys of a fixed schema this is the plain numeric order, since a minimally encoded non-negative integer sorts bytewise exactly as it sorts by magnitude. For the text keys of an open map it is the bytewise order of the UTF-8. A map carries one key type, so the two orders never have to be reconciled against each other.
+
+## Schemas and field tables
+
+The principle that structure rides on the wire and meaning comes from the schema (Structure on the wire, meaning in the schema, above) raises the obvious question: where does the schema itself live, and how does a decoder come to hold it. The answer separates two kinds of schema that must never collapse (the separation law, specification Section 1).
+
+### Two kinds of schema
+
+A **field table** is the wire schema of an artifact type. It is a flat list, one entry per field, each entry fixing an integer key, a field name, a canonical type from the value domain above, and whether the field must be present to act (Field-table entries, below). There is one table per protocol artifact type: the signed envelope, the issuer identifier, the grant, the delegation, the capability definition, the safe-state definition, the steward schema, the discovery record. These tables are the grammar of the protocol. They are identical in every implementation and fixed for a given format version. An implementation holds them from the specification at build time, and does not fetch one at runtime to decide authority (The floor is shipped, not fetched, below).
+
+A **definition** is a content-addressed artifact encoded against a field table, carrying the data a deployment varies, a particular capability or a particular steward schema. A definition is distributed as specification Section 7.2 describes, by content address, from the commons or a peer or a USB stick, and referenced by the hash of its own bytes. A grant names the capability it grants by that hash, never by copying it.
+
+This is the answer to how the schema is distributed. The field tables are not distributed, because they are the protocol. The definitions are distributed, because they are not. A relay that forwards a grant it cannot interpret forwards the content-addressed bytes and checks their hash, never decoding the grant's fields, so it needs neither the capability definition the grant names nor the grant table itself.
+
+### The floor is shipped, not fetched
+
+A field table could in principle be written as a canonical artifact, content-addressed and fetched like a definition. That path does not terminate. To decode the fetched table, a decoder needs a table for tables, itself an artifact needing a table, without end. Every format that meets this regress stops it at a fixed floor it ships rather than fetches. The CBOR grammar is RFC 8949, not a fetched description of CBOR. The DNS root is configured, not resolved. A compiler is bootstrapped, not compiled by itself. Murmur's floor is the canonical-encoding rules of this document, the **meta-table** that describes the shape of a field table, and the format version that fixes which rules are in force (specification Section 7.1). That floor is built into every implementation. It is the smallest grammar a node must be born knowing, and on it every other table is data.
+
+On that floor, every protocol artifact table, the envelope, the grant, the capability definition, and the rest, is itself a canonical artifact, an instance of the meta-table with a content address of its own. The tables are authored once, in this specification and its conformance vectors, and an implementation reads them from there rather than transcribing each into its own types by hand. This is adopted, not deferred. At this early stage the tables will change often. A single authored source that every implementation reads is what keeps two implementations from drifting, and what makes a new field a one-artifact change rather than a parallel edit in every language. A change to a table is a change to the grammar, governed by the format version and the validation rules of the next section (Decode, then validate, below).
+
+A table is held, never fetched to decide authority. An implementation's acting decoder is driven only by the tables it holds at build time, the published tables for the format versions it implements. So a node can always state which shapes it will act on, and a shape it was not built for is refused and falls to its safe state, never fetched and then acted on (Decode, then validate, below). An acting node MUST NOT gain the ability to parse a shape it cannot yet honour, which is why a new table ships in the same release as the code that honours it. Only a read-only consumer, a diagnostic or a lint that displays or checks an artifact without acting on it, MAY load a table at runtime, since displaying an unknown shape is safe where acting on it is not.
+
+Whether an implementation drives its decoder from the tables as data or compiles them into its types is a choice below the contract line, and does not change the bytes. The byte contract is the table, not the strategy that reads it. A reference implementation that reads the tables as data takes a table change without a code change; the witness, with one fixed capability, may compile them in. Both are conformant, because both decode the same bytes.
+
+### Field-table entries
+
+Each entry in a field table fixes four things and no more:
+
+- an **integer key**, the field's identity on the wire for the life of the format version, never reused;
+- a **name**, the field's identity in the authoring surface and in this specification, with no presence on the wire (Structure on the wire, meaning in the schema, above);
+- a **type**, exactly one canonical value-domain type from above: an integer, a byte string, a text string, an array, a map, a boolean, a decimal, or a rational. A decimal or rational field also fixes its dimension and base unit (Units, above);
+- a **presence rule**, whether the field must be present for a party to act on the artifact. This is a validation property, not a decoding one (Decode, then validate, below).
+
+### Decode, then validate
+
+A decoder's work is structural and total. It reads the canonical bytes into typed fields, enforces the rules of this document, and rejects non-canonical bytes (specification Section 7.2). It does not reject an artifact for a missing named field, because a missing field is not a malformed encoding.
+
+Presence is enforced one step later, by the party about to act on the artifact, against the field table for the artifact's type and format version. A verifier about to exercise a grant requires the issuer, the audience, the capability, and the signature, since its security rests on them, and refuses a grant lacking them at that gate, not at the decoder. A relay forwarding the same grant requires none of them. Required-ness is scoped to an action and a role, never asserted of the artifact's mere existence.
+
+This is the lesson of proto3, which removed the required field its predecessor carried. In a format that evolves a type in place, a presence check welded into the decoder is permanent and global. A field once required can never be relaxed without a coordinated migration, and a decoder that rejects on a missing field lets one party's requirement wedge every reader that does not use that field. Murmur avoids the trap from both sides. It does not weld presence into the decoder, so a missing field never wedges a forwarder. And it does not evolve a type in place: a changed field set is a new format version, understood or refused as a whole (specification Section 7.1), under a table closed per version, so an unexpected key is non-conformant rather than a tolerated unknown. The escape proto2 lacked, a version a reader either understands entirely or refuses, Murmur has by construction.
+
+One half of the presence question Murmur settles in its own favour. An absent field is omitted entirely, never encoded as a default value or a null (Booleans, and the absence of null, above), so "present with the default" and "absent" are never two readings of one state. That ambiguity is what forced an explicit presence marker back into proto3 after it was removed. The canonical form does not have it to fix.
 
 ## Signed envelope and identifier
 
