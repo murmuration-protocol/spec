@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """check-refs.py - verify every "Section N" / "Section N.M" cross-reference in
-the docs resolves to a real heading in spec.md. The extensions and the primer
-state their section references are to the core, so they are checked against
-spec.md's headings too. This guards the renumber-debt the spec's section
-numbering would otherwise accumulate silently. Runs from anywhere."""
+the docs resolves to a real heading in spec.md. The primer, the extensions, the
+canonical-encoding rules, and the vectors README all state their section
+references are to the core, so they are checked against spec.md's headings too.
+This guards the renumber-debt the spec's section numbering would otherwise
+accumulate silently. Runs from anywhere."""
 import re
 import sys
 from pathlib import Path
@@ -20,7 +21,7 @@ ref_run = re.compile(r"\bSections?\s+(\d+(?:\.\d+)*(?:\s*(?:,\s*and|,|and|to)\s*
 num_tok = re.compile(r"\d+(?:\.\d+)*")
 
 bad = []
-paths = ["spec.md", "primer.md", "README.md"]
+paths = ["spec.md", "primer.md", "README.md", "canonical-encoding.md", "vectors/README.md"]
 paths += sorted(str(p.relative_to(root)) for p in (root / "extensions").glob("*.md"))
 for rel in paths:
     for n, line in enumerate((root / rel).read_text().splitlines(), 1):
