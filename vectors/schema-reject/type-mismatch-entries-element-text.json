@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table whose entries element is a text string, not an entry map",
+  "spec": "7.1",
+  "cbor": "a300190400010102816178",
+  "interpret_as": 0,
+  "reason": "type-mismatch"
+}

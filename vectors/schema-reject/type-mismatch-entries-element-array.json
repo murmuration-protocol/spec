@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table whose entries element is an array, not an entry map",
+  "spec": "7.1",
+  "cbor": "a300190400010102818101",
+  "interpret_as": 0,
+  "reason": "type-mismatch"
+}

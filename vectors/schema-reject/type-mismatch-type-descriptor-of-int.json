@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "type-descriptor whose of is an integer, not a nested type-descriptor map",
+  "spec": "7.1",
+  "cbor": "a30019040001010281a4000001616102a2000601000301",
+  "interpret_as": 0,
+  "reason": "type-mismatch"
+}

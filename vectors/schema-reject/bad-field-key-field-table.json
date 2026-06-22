@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table written as a wholly text-keyed map",
+  "spec": "7.1",
+  "cbor": "a367656e7472696573006776657273696f6e016964657363726962657300",
+  "interpret_as": 0,
+  "reason": "bad-field-key"
+}

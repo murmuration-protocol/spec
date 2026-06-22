@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table whose entry keys are {0, 1, 1}, a duplicate of key 1",
+  "spec": "7.1",
+  "cbor": "a30019040001010283a400000162663002a100000301a400010162663102a100000301a400010162663102a100000301",
+  "interpret_as": 0,
+  "reason": "malformed-field-table"
+}

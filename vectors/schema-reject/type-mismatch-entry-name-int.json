@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field-table entry whose name is an integer, not a text string",
+  "spec": "7.1",
+  "cbor": "a30019040001010281a40000010502a100000301",
+  "interpret_as": 0,
+  "reason": "type-mismatch"
+}

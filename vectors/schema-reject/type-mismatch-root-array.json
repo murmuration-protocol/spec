@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field-table artifact that is an array, not a map",
+  "spec": "7.1",
+  "cbor": "8101",
+  "interpret_as": 0,
+  "reason": "type-mismatch"
+}

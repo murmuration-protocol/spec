@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "type-descriptor of kind rational with no unit code",
+  "spec": "7.1",
+  "cbor": "a30019040001010281a4000001616102a100050301",
+  "interpret_as": 0,
+  "reason": "malformed-type-descriptor"
+}

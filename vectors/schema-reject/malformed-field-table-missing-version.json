@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table missing the version field the meta-table requires",
+  "spec": "7.1",
+  "cbor": "a2001904000281a400000162663002a100000301",
+  "interpret_as": 0,
+  "reason": "malformed-field-table"
+}

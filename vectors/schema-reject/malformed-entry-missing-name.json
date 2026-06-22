@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field-table entry missing its name field",
+  "spec": "7.1",
+  "cbor": "a30019040001010281a3000002a100000301",
+  "interpret_as": 0,
+  "reason": "malformed-entry"
+}

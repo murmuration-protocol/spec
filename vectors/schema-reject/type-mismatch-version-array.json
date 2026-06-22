@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table whose version is an array, not an integer",
+  "spec": "7.1",
+  "cbor": "a3001904000181010281a400000162663002a100000301",
+  "interpret_as": 0,
+  "reason": "type-mismatch"
+}

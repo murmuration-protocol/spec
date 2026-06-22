@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table carrying key 3, which the meta-table does not define",
+  "spec": "7.1",
+  "cbor": "a40019040001010281a400000162663002a1000003010300",
+  "interpret_as": 0,
+  "reason": "unknown-field-key"
+}

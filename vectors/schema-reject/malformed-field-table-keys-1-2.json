@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table whose entry keys are {1, 2}, ascending but not starting at 0",
+  "spec": "7.1",
+  "cbor": "a30019040001010282a400010162663102a100000301a400020162663202a100000301",
+  "interpret_as": 0,
+  "reason": "malformed-field-table"
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "field table that carries no entries at all",
+  "spec": "7.1",
+  "cbor": "a30019040001010280",
+  "interpret_as": 0,
+  "reason": "malformed-field-table"
+}

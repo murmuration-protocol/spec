@@ -1,0 +1,8 @@
+{
+  "kind": "schema-reject",
+  "description": "array of an array of a decimal that has no unit code",
+  "spec": "7.1",
+  "cbor": "a30019040001010281a4000001616102a2000601a2000601a100040301",
+  "interpret_as": 0,
+  "reason": "malformed-type-descriptor"
+}
