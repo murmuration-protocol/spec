@@ -1,4 +1,4 @@
-# Murmuration
+# Murmur
 
 **A common set of rules that lets connected physical devices recognize each other, agree on what each is and what it is allowed to do, and behave safely when any of them drop out, over whatever connection they already use.**
 
@@ -20,7 +20,7 @@ A capability declares not only what it is but the non-functional conditions it n
 
 ## The four concerns
 
-Murmuration treats four properties as orthogonal axes. Collapsing any two breaks the canonical case of four identical motor modules in one vehicle: same interface, distinct identities, non-interchangeable positions.
+Murmur treats four properties as orthogonal axes. Collapsing any two breaks the canonical case of four identical motor modules in one vehicle: same interface, distinct identities, non-interchangeable positions.
 
 - **Identity: *who* is this.** A device is a public key. The identifier is self-certifying: it is, or derives from, the key, so there is no naming authority to spoof, and the identity is the same across any transport and any domain rather than an address issued by one ecosystem.
 - **Feature-capability: *what kind of thing* is this.** Structural interface satisfaction, in the style of a Go interface or MIDI-CI. A device "is" a motor, an inverter, or a synth voice if it satisfies the declared interface. This is discovered, not granted.
@@ -39,9 +39,9 @@ The protocol's honest job is fast, trustworthy detection plus a declared safe de
 
 ## Relationship to existing systems
 
-The most common first reaction is that this is another Zigbee. The distinction is precise. Zigbee is a vertical stack: a radio (IEEE 802.15.4), a mesh network layer, and an application layer in which devices interoperate by agreeing on *clusters*, shared definitions of what a device is. That last layer is the same core idea as Murmuration's capability typing, and Zigbee has shipped it in hundreds of millions of devices. The resemblance is real, but it concerns one layer of one stack.
+The most common first reaction is that this is another Zigbee. The distinction is precise. Zigbee is a vertical stack: a radio (IEEE 802.15.4), a mesh network layer, and an application layer in which devices interoperate by agreeing on *clusters*, shared definitions of what a device is. That last layer is the same core idea as Murmur's capability typing, and Zigbee has shipped it in hundreds of millions of devices. The resemblance is real, but it concerns one layer of one stack.
 
-Murmuration is not a stack; it is a contract. It defines no radio, network, or transport, and runs over Zigbee's radio, Wi-Fi, a wired bus, or a mesh equally. What it adds is what those stacks lack: identity that travels across transports and domains; authority that is granted and revocable, held separately from device type; declared behaviour on failure; one contract across domains rather than one consortium per ecosystem; and the owner, rather than the manufacturer, as the ultimate root of trust.
+Murmur is not a stack; it is a contract. It defines no radio, network, or transport, and runs over Zigbee's radio, Wi-Fi, a wired bus, or a mesh equally. What it adds is what those stacks lack: identity that travels across transports and domains; authority that is granted and revocable, held separately from device type; declared behaviour on failure; one contract across domains rather than one consortium per ecosystem; and the owner, rather than the manufacturer, as the ultimate root of trust.
 
 Each neighbouring system owns one or two of these concerns. None owns the contract that spans them, and none declares behaviour on failure:
 
@@ -49,7 +49,7 @@ Each neighbouring system owns one or two of these concerns. None owns the contra
 |---|---|---|---|---|---|
 | Best-in-class today | Zenoh, DDS | SPIFFE, DIDs | UCAN, Keyhive | TUF, Uptane | *none* |
 
-Murmuration is designed to **compose with these, not replace them**. Transport can be Zenoh, DDS, or raw UDP; authority can be UCAN-style tokens; identity can be SPIFFE or a DID; update verification adopts the discipline TUF established and Uptane carries into vehicles. The protocol declares the contract; the substrates move the bytes and sign the keys. Because there is no clear winner among transports, identity layers, or authority schemes (and there may never be), a layer that composes over all of them treats that fragmentation as an advantage: every existing deployment is a potential host rather than a competitor to displace, and adoption adds a contract layer rather than ripping anything out.
+Murmur is designed to **compose with these, not replace them**. Transport can be Zenoh, DDS, or raw UDP; authority can be UCAN-style tokens; identity can be SPIFFE or a DID; update verification adopts the discipline TUF established and Uptane carries into vehicles. The protocol declares the contract; the substrates move the bytes and sign the keys. Because there is no clear winner among transports, identity layers, or authority schemes (and there may never be), a layer that composes over all of them treats that fragmentation as an advantage: every existing deployment is a potential host rather than a competitor to displace, and adoption adds a contract layer rather than ripping anything out.
 
 ## Longevity and ownership
 
