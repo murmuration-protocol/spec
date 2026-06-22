@@ -10,13 +10,53 @@ The encoding is deterministic CBOR (RFC 8949). This document restricts CBOR to a
 
 ## Scope of this draft
 
-This draft pins the **value domain**: the scalar values a canonical artifact may carry and how each reaches its single byte form. Four sections remain to be drafted, and the conformance vectors lead each:
+This draft pins the **CBOR subset** and the **value domain**: the structural rules every canonical artifact obeys, and the scalar values it may carry with the single byte form each reaches. Four sections remain to be drafted, and the conformance vectors lead each:
 
-- the permitted CBOR subset (the major types allowed, the ban on tags and indefinite lengths, the minimal-length rules), of which the existing `reject/` vectors already pin part;
 - the map-key rules (single-type keys per map, integer keys for fixed schema fields, text keys for open name-indexed maps, no float, container, mixed, or duplicate keys, canonical ordering);
 - the signed envelope and identifier layout, with the signed-input boundary;
 - the algorithm-tag namespace and its reserved private range;
 - the unit vocabulary that schema fields reference by code.
+
+## CBOR subset
+
+Deterministic CBOR is RFC 8949 with its degrees of freedom removed. Plain CBOR can encode one logical value many ways: a tag or no tag, a short head or a padded one, a definite or an indefinite length, a float that compares equal to another but differs in bytes. Each such choice is a second byte form of one value, and each breaks content-addressing. This subset removes the choices, so a value has one structure and one length encoding before the value conventions below even apply. The rules track the core deterministic encoding of RFC 8949, narrowed further to the major types Murmur uses.
+
+### One data item
+
+A canonical artifact is exactly one CBOR data item. A decoder MUST consume the whole input as that single item and MUST reject any trailing byte, rather than stop at the first complete item and ignore the rest. Trailing bytes are how a second, unread value rides inside one that verifies, so an artifact that does not account for every byte is refused. The `reject/trailing-bytes` vector pins this.
+
+### Permitted major types
+
+Only these CBOR major types appear in a canonical artifact:
+
+- **0** and **1**, unsigned and negative integers (Integers, below);
+- **2**, byte strings (Text and byte strings, below);
+- **3**, text strings (Text and byte strings, below);
+- **4**, arrays;
+- **5**, maps;
+- **7** restricted to the two simple values true and false (Booleans, and the absence of null, below).
+
+Every other use of major type 7 is excluded: the half, single, and double floats (No floating point, below), null and undefined (Booleans, and the absence of null, below), and every remaining simple value. Major type 6, the tag, is excluded entirely (No tags, below). A decoder MUST reject a major type, or a major-type-7 value, outside this list. The decimal and the rational are arrays of integers, not tagged numbers, so they need no type beyond the array and the integer.
+
+### No tags
+
+A CBOR tag (major type 6) MUST NOT appear in a canonical artifact. A tag is an optional annotation a decoder is free to ignore, so a value and its tagged form are two encodings of one thing. The meaning of a Murmur field comes from its schema position, never from a tag on the wire (Domain-declared magnitudes, below). The tagged decimal-fraction, bigfloat, and bignum forms are excluded by this rule, which is why the decimal and the rational are bare two-element arrays. An algorithm a digest or a key names is carried by the tag mechanism of specification Section 7.1, a field in the schema, not a CBOR tag.
+
+### No indefinite lengths
+
+Every byte string, text string, array, and map MUST carry a definite length in its head. The indefinite-length forms, and the break stop that closes them, MUST NOT appear, and a decoder MUST reject them. An indefinite length lets one value arrive as several chunks, which is a second byte form and a streaming-decode hazard at once. The `reject/indefinite-length-array` vector pins this.
+
+### Minimal encoding
+
+The head of every item MUST use the shortest of CBOR's argument forms that holds its value: the immediate form for an argument under 24, then the one, two, four, and eight byte forms in turn, never a longer head where a shorter one fits. This is one rule with a wide reach. It governs an integer value, a string or container length, and the element count of an array or map alike, because each is a CBOR argument. The value 0 is the single byte `0x00`, never `0x18 0x00`. A length of ten lives in the head, never in a longer following field. A decoder MUST reject a non-minimal head. The `reject/non-minimal-uint` vector pins the integer case; the rule is identical for every length and count.
+
+### Maps and ordering
+
+A map is structurally a definite-length, minimally headed container like any other, and this subset governs that framing. Its keys carry further rules: the permitted key types, the single key type per map, the ban on duplicates, and the canonical sort by encoded key bytes. Those belong to the map-key section (still to draft, above), and the `reject/duplicate-map-key` and `reject/unsorted-map-keys` vectors already exercise them. The key rules are kept distinct from the framing rule because a key's type and order are value conventions, not container structure.
+
+### Bounded structure
+
+Nesting is finite, and decoding it is resource-bounded. A canonical artifact has no cyclic or self-referential structure, since CBOR has none, but adversarial input can still nest arrays and maps deeply enough to exhaust a constrained decoder. Decoding MUST be bounded in memory and time under a declared limit, and MUST fail to the declared safe state when the limit is exceeded, by the input-cost rule of specification Section 7.3. A bound on nesting depth is the structural half of that rule.
 
 ## Value domain
 
