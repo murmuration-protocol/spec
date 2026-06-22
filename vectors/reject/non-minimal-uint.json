@@ -3,5 +3,5 @@
   "description": "the value 0 encoded in two bytes as uint8; the only valid form is 0x00",
   "spec": "7.2",
   "bytes": "1800",
-  "reason": "non-minimal-integer"
+  "reason": "non-minimal"
 }

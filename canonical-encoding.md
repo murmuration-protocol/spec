@@ -156,6 +156,44 @@ The keys of a map MUST appear in ascending bytewise lexicographic order of their
 
 The order is taken on the encoded key bytes, not on the decoded value, so a decoder checks it by comparing raw bytes as it reads, without interpreting a single key. For the integer keys of a fixed schema this is the plain numeric order, since a minimally encoded non-negative integer sorts bytewise exactly as it sorts by magnitude. For the text keys of an open map it is the bytewise order of the UTF-8. A map carries one key type, so the two orders never have to be reconciled against each other.
 
+## Refusal reasons
+
+A decoder refuses a non-canonical or malformed artifact rather than re-encoding it to compare (specification Section 7.2). That accept-or-refuse verdict is the byte behaviour the contract fixes: the same bytes are accepted by every conformant decoder, or refused by every one. This section names the refusals, so a vector can pin not only that an artifact is refused but why. A decoder that refuses the right bytes for the wrong reason is then caught, not passed.
+
+A reason code is a diagnostic, never a wire field. It does not travel between nodes, and one node never sends another a reason. It is kept distinct from the byte contract for that reason (the separation law, specification Section 1): the wire carries the artifact, the reason is local to the party that refused it. The codes are stable text so a conformance vector can carry one and an implementation can be checked against it. This is the form the reject vectors already take.
+
+### Byte-determined reasons
+
+These reasons are a function of the bytes alone. The same input yields the same reason on every conformant decoder. A reject vector therefore pins the reason, and a conformant decoder MUST report the named code for a refusal a vector pins.
+
+- `trailing-bytes`: a second data item rides behind the first (One data item, above).
+- `indefinite-length`: an indefinite-length head, or the break stop that closes one (No indefinite lengths, above).
+- `non-minimal`: a head longer than the shortest that holds its argument, whether that argument is an integer value, a string length, or an element count (Minimal encoding, above). It is one reason because it is one rule.
+- `tag`: a CBOR tag, major type 6 (No tags, above).
+- `float`: a major-type-7 floating-point value (No floating point, above).
+- `null`: null or undefined (Booleans, and the absence of null, above).
+- `simple-value`: a major-type-7 simple value other than true or false (Permitted major types, above).
+- `reserved-additional`: additional information 28, 29, or 30, which is not well-formed CBOR.
+- `truncated`: the input ended in the middle of an item, which is not well-formed CBOR.
+- `duplicate-map-key`: a map encodes the same key twice (No duplicate keys, above).
+- `unsorted-map-keys`: a map's keys are not in ascending bytewise order (Canonical order, above).
+- `mixed-map-keys`: a map mixes integer and text keys (One key type per map, above).
+- `bad-map-key-type`: a map key is neither an integer nor a text string (One key type per map, above).
+- `invalid-utf8`: a text string is not valid UTF-8 (Text and byte strings, above).
+- `byte-order-mark`: a text string carries a byte-order mark (Text and byte strings, above).
+- `non-nfc`: a text string is not in Normalization Form C (Text and byte strings, above).
+
+The first three of these, plus the duplicate and the unsorted cases, are pinned by the present reject vectors. The rest are pinned as their vectors are written, one rule per file. The distinction between a value that is well-formed CBOR but non-canonical and one that is not well-formed CBOR at all does not change a reason's status here: both are determined by the bytes, so both are pinnable.
+
+### Limit-relative reasons
+
+Two refusals depend on a bound the decoder declares, not on the bytes alone, by the input-cost rule (specification Section 7.3, and Bounded structure, above):
+
+- `depth-exceeded`: nesting past the decoder's declared depth bound.
+- `size-exceeded`: more items or bytes than the decoder's declared bound.
+
+A decoder with a tighter bound refuses an input that a looser one accepts. Two conformant decoders may therefore disagree on these and both stay conformant. So these reasons are not pinned for cross-implementation reason-equality the way the byte-determined reasons are. A vector that exercises them states the bound it assumes.
+
 ## Schemas and field tables
 
 The principle that structure rides on the wire and meaning comes from the schema (Structure on the wire, meaning in the schema, above) raises the obvious question: where does the schema itself live, and how does a decoder come to hold it. The answer separates two kinds of schema that must never collapse (the separation law, specification Section 1).
