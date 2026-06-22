@@ -10,9 +10,8 @@ The encoding is deterministic CBOR (RFC 8949). This document restricts CBOR to a
 
 ## Scope of this draft
 
-This draft pins the **CBOR subset** and the **value domain**: the structural rules every canonical artifact obeys, and the scalar values it may carry with the single byte form each reaches. Four sections remain to be drafted, and the conformance vectors lead each:
+This draft pins the **CBOR subset**, the **value domain**, and the **map-key rules**: the structural rules every canonical artifact obeys, the scalar values it may carry with the single byte form each reaches, and how a map's keys are typed and ordered. Three sections remain to be drafted, and the conformance vectors lead each:
 
-- the map-key rules (single-type keys per map, integer keys for fixed schema fields, text keys for open name-indexed maps, no float, container, mixed, or duplicate keys, canonical ordering);
 - the signed envelope and identifier layout, with the signed-input boundary;
 - the algorithm-tag namespace and its reserved private range;
 - the unit vocabulary that schema fields reference by code.
@@ -52,7 +51,7 @@ The head of every item MUST use the shortest of CBOR's argument forms that holds
 
 ### Maps and ordering
 
-A map is structurally a definite-length, minimally headed container like any other, and this subset governs that framing. Its keys carry further rules: the permitted key types, the single key type per map, the ban on duplicates, and the canonical sort by encoded key bytes. Those belong to the map-key section (still to draft, above), and the `reject/duplicate-map-key` and `reject/unsorted-map-keys` vectors already exercise them. The key rules are kept distinct from the framing rule because a key's type and order are value conventions, not container structure.
+A map is structurally a definite-length, minimally headed container like any other, and this subset governs that framing. Its keys carry further rules: the permitted key types, the single key type per map, the ban on duplicates, and the canonical sort by encoded key bytes. Those belong to the Map keys section (below), and the `reject/duplicate-map-key` and `reject/unsorted-map-keys` vectors already exercise them. The key rules are kept distinct from the framing rule because a key's type and order are value conventions, not container structure.
 
 ### Bounded structure
 
@@ -121,3 +120,28 @@ A person authoring a definition writes magnitudes the legible way, `150ms`, `3h2
 ### Booleans, and the absence of null
 
 Booleans are the CBOR simple values true and false. Null and undefined MUST NOT appear in a canonical artifact. An absent optional field is omitted entirely, never encoded as null, because "present and null" and "absent" would otherwise be two byte forms of the same absence.
+
+## Map keys
+
+A map is how a Murmur schema names its fields. Its framing is pinned in the CBOR subset above; its keys carry the further rules that give a named structure exactly one byte form: a single key type, no duplicate, and one canonical order.
+
+### One key type per map
+
+Every key in a map MUST be the same type, and that type MUST be either an integer or a text string. A map MUST NOT mix integer and text keys, and a decoder MUST reject one that does. The other canonical types are valid as values but never as keys: no byte string, array, map, or boolean names a field, because a field name is a number or a word, never a digest, a list, or a flag. Floats are excluded everywhere already (No floating point, above).
+
+The two key types are the two ways a map is addressed, and the schema fixes which a given map uses:
+
+- **Integer keys** index a **fixed schema**, a field set known when the definition is authored. Each field is named by a small integer that is its identity for the life of the schema. These are the **integer schema keys** the value domain refers to: the meaning of field 1 lives in the definition, not in any string on the wire. Renaming a field in the authoring surface leaves the same integer on the wire, and an integer is one byte where a name would be many.
+- **Text keys** index an **open, name-indexed map**, a set whose members are not fixed at design time, such as a table of capability names or registry tags. The key is a text string under the text-string rules (Text and byte strings, above), valid UTF-8 in Normalization Form C, so two authorings of the same name are the same key.
+
+The choice between integer and text keys is the schema's, made once per map when the definition is authored, never varied from one artifact to the next.
+
+### No duplicate keys
+
+A map MUST NOT carry the same key twice, and a decoder MUST reject one that does, rather than keep the first entry or the last. A duplicate makes a field's value ambiguous, and the rule that resolves it, first-wins or last-wins, is an implementation choice. That choice is exactly the second reading this profile exists to forbid. Because every key is itself minimally encoded, and a text key is in Normalization Form C, two keys are the same key precisely when their encoded bytes are equal, with no further comparison needed. The `reject/duplicate-map-key` vector pins this.
+
+### Canonical order
+
+The keys of a map MUST appear in ascending bytewise lexicographic order of their encoded form: the encoded keys are compared as unsigned bytes, left to right, and the shorter sorts first where one is a prefix of the other. This is the map ordering of the core deterministic encoding of RFC 8949. A decoder MUST reject a map whose keys are out of this order. The `reject/unsorted-map-keys` vector pins this.
+
+The order is taken on the encoded key bytes, not on the decoded value, so a decoder checks it by comparing raw bytes as it reads, without interpreting a single key. For the integer keys of a fixed schema this is the plain numeric order, since a minimally encoded non-negative integer sorts bytewise exactly as it sorts by magnitude. For the text keys of an open map it is the bytewise order of the UTF-8. A map carries one key type, so the two orders never have to be reconciled against each other.
