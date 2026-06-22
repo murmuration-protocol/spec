@@ -14,6 +14,7 @@ vectors/
   content-id/    canonical bytes and their SHA-256 content address
   envelope/      the signed envelope: a byte-pinned signature, and verify cases
   reject/        valid CBOR that is non-canonical and must be refused on receipt
+  schema-reject/ canonical CBOR that decodes clean but fails interpretation against a field table
 ```
 
 ## File shape
@@ -42,7 +43,7 @@ A single-key object whose sole key is a registered tag escapes into the types JS
 
 A single-key object whose key begins with `$` but is not a registered tag is an error, never a literal, so a mistyped tag fails loudly rather than encoding as a stray map. The four tags above are the registered set; more are added here as the value domain grows.
 
-The reject vectors take none of this. They carry only `bytes` and a `reason`, since their point is a byte sequence with no valid logical value to express.
+The reject vectors take none of this. They carry only `bytes` and a `reason`, since their point is a byte sequence with no valid logical value to express. The schema-reject vectors are the same kind one layer up. Their bytes decode clean, so they are canonical, but they do not match the field table their type declares, so there is no named-field value to give either. They carry the `cbor`, the `interpret_as` artifact-type code of the table to interpret them against, and the `reason` that interpretation refuses them with.
 
 ### Kinds
 
@@ -51,6 +52,7 @@ The reject vectors take none of this. They carry only `bytes` and a `reason`, si
 - `envelope-sign`: a `seed`, the `claims_cbor` that is signed, and the expected `signature`. Ed25519 signing is deterministic (RFC 8032), so the signature bytes are reproducible across implementations and can be pinned, not merely verified.
 - `envelope-verify`: a `public_key`, `claims_cbor`, a `signature`, and a `valid` verdict. The negative cases, a flipped byte or a wrong key, carry `valid: false`.
 - `reject`: the offending `bytes` and a `reason`. A conformant decoder refuses them rather than re-encoding to compare (Section 7.2).
+- `schema-reject`: canonical `cbor` that decodes clean, the `interpret_as` artifact-type code of the field table to interpret it against, and the `reason` interpretation refuses it with. This is the interpretation layer, not the byte layer that `reject` covers: the bytes are well-formed, and only the table they are read against rejects them. The reasons are the artifact-determined interpretation refusals of the canonical-encoding rules ("Interpretation refusals"). A conformant interpreter MUST report the named `reason`.
 
 The signed envelope on the wire is the canonical claims, an Ed25519 signature, and a small header. The exact bytes the signature covers, including whether the header is part of the signed input, are pinned with the envelope schema. These vectors sign the canonical claims directly, as the verifiable core.
 
@@ -68,7 +70,9 @@ Both `murmur-rs`, the reference implementation, and `murmur-go`, the conformance
 
 ## Status
 
-This is the first scaffold, and the byte values are real and self-checking. The Ed25519 public key matches RFC 8032 Test 1, and the reject cases follow the canonical CBOR rules of RFC 8949. The wire encoding is mandated by the spec (Section 7.1): deterministic CBOR with an owned signed envelope, versioned and algorithm-tagged. Schema-level vectors, a real grant and a real capability definition, land once those field tables are pinned.
+This is the first scaffold, and the byte values are real and self-checking. The Ed25519 public key matches RFC 8032 Test 1, and the reject cases follow the canonical CBOR rules of RFC 8949. The wire encoding is mandated by the spec (Section 7.1): deterministic CBOR with an owned signed envelope, versioned and algorithm-tagged.
+
+The floor field tables are pinned (the meta-table, the entry table, and the type-descriptor table, each a `content-id` vector), so the first schema-reject vectors land against them. They exercise the artifact-determined interpretation refusals on the floor itself: a field table whose entry keys are not dense, a type-descriptor that omits what its kind requires, an entries element of the wrong shape. The capability-relative refusals (an unresolved ref or an unknown code) are not pinned for reason-equality, because two conformant nodes may legitimately disagree on them. Schema vectors against a real grant and a real capability definition land once those field tables are pinned, alongside the positive schema vectors that carry a named-field `value`.
 
 ## Algorithm-agility negative cases (planned)
 

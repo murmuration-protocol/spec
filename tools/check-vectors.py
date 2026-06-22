@@ -28,6 +28,7 @@ DIR_KINDS = {
     "content-id": {"content-id"},
     "envelope": {"envelope-sign", "envelope-verify"},
     "reject": {"reject"},
+    "schema-reject": {"schema-reject"},
 }
 
 # Fields each kind must carry, on top of the common kind/description/spec.
@@ -37,6 +38,7 @@ REQUIRED = {
     "envelope-sign": ["seed", "claims_cbor", "public_key", "signature"],
     "envelope-verify": ["public_key", "claims_cbor", "signature", "valid"],
     "reject": ["bytes", "reason"],
+    "schema-reject": ["cbor", "interpret_as", "reason"],
 }
 
 # Every field whose value is raw bytes, expressed as lowercase hex.
