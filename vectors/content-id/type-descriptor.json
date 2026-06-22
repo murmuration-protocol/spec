@@ -1,0 +1,7 @@
+{
+  "kind": "content-id",
+  "description": "SHA-256 content address of the type-descriptor table, the field table for a field type",
+  "spec": "7.1",
+  "cbor": "a3000201010284a4000001646b696e6402a100000301a4000101626f6602a2000702020300a40002016372656602a100000300a400030164756e697402a100000300",
+  "sha256": "7092c4ee2d5b290e5f2fcce33f9d8ce99403d4a29344d4b5e33a04135c2611b1"
+}

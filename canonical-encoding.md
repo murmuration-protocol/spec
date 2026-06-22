@@ -205,6 +205,61 @@ This is the lesson of proto3, which removed the required field its predecessor c
 
 One half of the presence question Murmur settles in its own favour. An absent field is omitted entirely, never encoded as a default value or a null (Booleans, and the absence of null, above), so "present with the default" and "absent" are never two readings of one state. That ambiguity is what forced an explicit presence marker back into proto3 after it was removed. The canonical form does not have it to fix.
 
+## The meta-table
+
+The schema model above rests on one artifact that has no schema outside itself: the **meta-table**, the field table that describes a field table. It is the fixed point that ends the regress of what decodes the table (The floor is shipped, not fetched, above). On the wire it is canonical CBOR like any artifact, an integer-keyed map under the rules of this document, and it is authored in YAML or Starlark and compiled, like any definition (specification Section 7.1). The field names it carries live in its own bytes, because a field table is data about fields, but those names never appear in an instance of the type it describes (Structure on the wire, meaning in the schema, above).
+
+### The closure
+
+The floor is not one table but a closure of three, each a field table, each described by the meta-table, with the meta-table describing itself. A field table is a map of three fields:
+
+```
+key  name       type                   presence
+0    describes  int                    required
+1    version    int                    required
+2    entries    array of (ref: entry)  required
+```
+
+`describes` is the artifact-type code this table is the grammar for, `version` is the format version it belongs to, and `entries` are its field entries. An entry is a map of four:
+
+```
+key  name      type                  presence
+0    key       int                   required
+1    name      text                  required
+2    type      ref: type-descriptor  required
+3    presence  int                   required
+```
+
+and a field's type is a small recursive descriptor:
+
+```
+key  name   type                  presence   used when
+0    kind   int                   required   always
+1    of     ref: type-descriptor  optional   kind = array (the element type)
+2    ref    int                   optional   kind = ref (the artifact-type of the nested table)
+3    unit   int                   optional   kind = decimal or rational
+```
+
+A scalar is a kind alone. A magnitude adds a unit code, fixed per field so it never rides on the wire (Units, above). An array adds its element type. A nested structure is a ref to another table. The three tables reference one another, and themselves, so the set decodes itself and nothing outside it is needed.
+
+### References resolve by code, and by version
+
+A ref names a type, never bytes and never a version. It resolves to the table of the named artifact type at the format version of the artifact being read, which is stamped once on the top-level artifact and inherited down (specification Section 7.1). References inside the floor are by artifact-type code rather than by content address, which is what frees the closure from a content address that would otherwise depend on itself: the type-descriptor's `of` refers to the type-descriptor table, so a hash-based reference would chase its own tail. A node resolves a code from the tables it ships, as a language resolves its built-in types by name. The closure's content addresses still exist, for attestation, off the decode path. Tables compose by code, data composes by hash (the separation law, specification Section 1).
+
+### Pinned codes
+
+The codes follow the wire cost (Minimal encoding, above). The range 0 to 23 is one byte and holds the hottest standard codes, 24 to 255 is two bytes, 256 to 1023 is three bytes reserved for standard growth, and 1024 and above is the private range, where a custom protocol bears its own cost. The assignments are append-only (Grammar and vocabulary, above).
+
+- **type-kinds**: int 0, bytes 1, text 2, bool 3, decimal 4, rational 5, array 6, ref 7.
+- **presence**: required 1, optional 0, boolean-aligned (required is the truthy value) but an extensible enum, with room for `required-to-act` and the like as appended codes.
+- **artifact-types**: field-table 0, entry 1, type-descriptor 2, then the protocol artifact types from 3, with 1024 and above reserved private.
+
+Field keys are dense within each table, as shown above.
+
+### The fixed point
+
+Encoded under these codes, the three tables are the suite's most load-bearing fixture. Each decodes and re-encodes to identical bytes, the decoder refuses every non-canonical form, and decoding the meta-table yields exactly the field layout the meta-table is itself encoded in. The floor proves itself a fixed point. The bytes and their content addresses are pinned by the conformance vectors.
+
 ## Signed envelope and identifier
 
 A signed artifact is claims plus a proof of who authored them. The claims are a canonical-CBOR map under the rules above. The proof is a signature over those claims by a key the reader can name and trust. This section pins the envelope that joins the two, and the identifier that names the key. It is the one part of the canonical form where a wrong byte boundary is a forgery and not a mismatch, so the boundary is stated exactly. The envelope is a minimal owned shape, a CBOR Web Token in all but the COSE wrapper (specification Section 7.1). COSE was declined as heavier than the requirement and unable to enforce the exactly-one-encoding rule that content-addressing needs.

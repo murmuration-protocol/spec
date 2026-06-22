@@ -1,0 +1,7 @@
+{
+  "kind": "content-id",
+  "description": "SHA-256 content address of the entry table, the field table for one field-table entry",
+  "spec": "7.1",
+  "cbor": "a3000101010284a4000001636b657902a100000301a4000101646e616d6502a100020301a4000201647479706502a2000702020301a40003016870726573656e636502a100000301",
+  "sha256": "0a3091f67f7adcd0fbe4a27092fa87da7b02e2a2c663d6ae8eb0252cf4861a8b"
+}
