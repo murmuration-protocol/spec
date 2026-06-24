@@ -98,6 +98,16 @@ Device identity is the worked example. The specification once leaned on on-devic
 
 The rule generalizes. Any design step of the form "and then the part generates or guarantees a unique X" should be read as a wish until something attestable backs it, and re-architected until the wish is not load-bearing.
 
+What can back such a claim is itself a short, specific list, and naming it turns the rule from a caution into a checklist. The protocol attests a handful of things.
+
+- **Authorship.** Who signed a given artifact.
+- **Integrity.** That a set of bytes is the artifact its content address names. This holds even for an unsigned definition referenced by hash from a signed grant.
+- **Delivery.** What was sent and acknowledged.
+- **Freshness.** What is live rather than stale, by the liveness machinery.
+- **Relational legality.** That a claim is consistent with a declared relation, such as one fencing term outranking another, or a transition being legal in a declared graph.
+
+It attests nothing else. Not physical state, not sensor truth, not implementation correctness, not another principal's honesty. One boundary inside the list is easy to lose. Relational legality attests that an action is consistent with a declared relation, never that a resource honoured the relation in the world. That compliance is the resource's own claim, witnessed and backstopped by the physical floor (below), never protocol-verified. The list is the attestable surface as currently understood, not a closed proof, so a sixth kind may yet earn its place. A design sentence of the form "the protocol ensures X" is sound only when X reduces to these few claims, and is a wish wearing a guarantee's clothes otherwise.
+
 ### The incentive-alignment engine
 
 Most of the specification's seemingly separate decisions are one thing: an engine that makes the selfish choice and the social good inseparable, rather than enforcing virtue. The mechanism is a single stance: **the burden falls on the party that gains the most from a decision.**
